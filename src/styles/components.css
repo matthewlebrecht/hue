@@ -219,6 +219,108 @@
   color: var(--rose);
 }
 
+/* ---------- tabs ---------- */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-faint);
+  font-size: 14px;
+  padding: 8px 4px;
+  min-height: 40px;
+  margin-right: 12px;
+}
+.tab--on {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ---------- shopping list ---------- */
+.list-add {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.list-add .input {
+  flex: 1;
+}
+
+.list-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px;
+}
+
+.list-check {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  border: 1px solid var(--hairline);
+  background: var(--bg);
+  color: var(--bg);
+  font-size: 15px;
+  line-height: 1;
+}
+.list-check--on {
+  background: var(--green);
+  border-color: var(--green);
+  color: #06231a;
+}
+
+.list-item {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  background: none;
+  border: none;
+  font-size: 16px;
+  padding: 13px 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.list-item--done {
+  text-decoration: line-through;
+  color: var(--text-faint);
+}
+.list-by {
+  font-size: 11px;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.list-remove {
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  font-size: 20px;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.list-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+.list-actions a.btn {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
 /* ---------- level 3: detail chrome ---------- */
 .detail__bar {
   display: flex;

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useInventory } from '../hooks/useInventory.js'
+import ShoppingList from './ShoppingList.jsx'
 import {
   STATUSES,
   setStatus,
@@ -21,6 +22,7 @@ export default function KitchenScreen() {
   const [editing, setEditing] = useState(null)
   const [adding, setAdding] = useState(false)
   const [restocking, setRestocking] = useState(false)
+  const [tab, setTab] = useState('inventory')
 
   async function flip(item, status) {
     if (item.status === status) return
@@ -50,22 +52,43 @@ export default function KitchenScreen() {
     <div className="screen">
       <div className="screen__head">
         <div className="screen__title">Kitchen</div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            className="btn"
-            onClick={doRestock}
-            disabled={restocking || lowOrOut.length === 0}
-          >
-            {restocking ? 'Restocking…' : 'Just restocked'}
-          </button>
-          <button className="btn btn--primary" onClick={() => setAdding(true)}>
-            + Item
-          </button>
-        </div>
+        {tab === 'inventory' && (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              className="btn"
+              onClick={doRestock}
+              disabled={restocking || lowOrOut.length === 0}
+            >
+              {restocking ? 'Restocking…' : 'Just restocked'}
+            </button>
+            <button className="btn btn--primary" onClick={() => setAdding(true)}>
+              + Item
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="tabs">
+        <button
+          className={`tab ${tab === 'inventory' ? 'tab--on' : ''}`}
+          onClick={() => setTab('inventory')}
+        >
+          Inventory
+        </button>
+        <button
+          className={`tab ${tab === 'list' ? 'tab--on' : ''}`}
+          onClick={() => setTab('list')}
+        >
+          Shopping list{lowOrOut.length > 0 ? ` · ${lowOrOut.length}` : ''}
+        </button>
       </div>
 
       {error && <div className="form-error">{error}</div>}
 
+      {tab === 'list' && <ShoppingList inventoryItems={items} inventoryLoaded={!loading} />}
+
+      {tab === 'inventory' && (
+        <>
       <div className="kitchen-summary card">
         {lowOrOut.length === 0 ? (
           <span style={{ color: 'var(--green)' }}>Everything's stocked</span>
@@ -118,6 +141,8 @@ export default function KitchenScreen() {
           </div>
         ))}
       </div>
+        </>
+      )}
 
       {adding && <AddSheet onClose={() => setAdding(false)} />}
       {editing && <ItemSheet item={editing} onClose={() => setEditing(null)} />}
