@@ -19,6 +19,7 @@ export default function BudgetSection({ monthKey, categories, budget, spend, onC
 
   const uncategorised = spend.byCategory.get('uncategorised') ?? 0
   const totalLimit = budget.reduce((s, b) => s + b.monthly_limit, 0)
+  const overTotal = totalLimit > 0 && spend.total > totalLimit
 
   return (
     <>
@@ -33,9 +34,19 @@ export default function BudgetSection({ monthKey, categories, budget, spend, onC
 
       <div className="card">
         <div className="budget-total">
-          <span>{usd(spend.total)} spent</span>
+          <span style={{ color: overTotal ? 'var(--rose)' : 'var(--text)' }}>
+            {usd(spend.total)} spent
+          </span>
           {totalLimit > 0 && (
-            <span style={{ color: 'var(--text-faint)' }}>of {usd(totalLimit)} budgeted</span>
+            <span style={{ color: 'var(--text-faint)' }}>
+              {overTotal ? (
+                <span style={{ color: 'var(--rose)' }}>
+                  {usd(spend.total - totalLimit)} over {usd(totalLimit)}
+                </span>
+              ) : (
+                `of ${usd(totalLimit)} budgeted`
+              )}
+            </span>
           )}
         </div>
 
@@ -79,21 +90,23 @@ function BudgetRow({ row }) {
   return (
     <div className="bar-row">
       <div className="bar-row__head">
-        <span>{row.name}</span>
+        <span style={tone === 'over' ? { color: 'var(--rose)' } : undefined}>{row.name}</span>
         <span className={`bar-row__figure bar-row__figure--${tone}`}>
           {usd(row.spent)}
           {hasLimit && <span className="bar-row__of"> / {usd(row.limit)}</span>}
         </span>
       </div>
       <div className="bar">
+        {/* No limit set means there is nothing to be over — show a thin trace, not a
+            full bar, which would read as "maxed out" when it means "untracked". */}
         <div
           className={`bar__fill bar__fill--${tone}`}
-          style={{ width: `${hasLimit ? Math.min(100, pct * 100) : 100}%` }}
+          style={{ width: hasLimit ? `${Math.min(100, pct * 100)}%` : '100%', opacity: hasLimit ? 1 : 0.35 }}
         />
       </div>
-      {tone === 'over' && (
-        <div className="bar-row__note">{usd(row.spent - row.limit)} over</div>
-      )}
+      <div className="bar-row__note">
+        {!hasLimit ? 'no limit set' : tone === 'over' ? `${usd(row.spent - row.limit)} over` : ''}
+      </div>
     </div>
   )
 }

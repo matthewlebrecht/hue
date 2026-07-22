@@ -3,6 +3,8 @@ import { useAccounts } from '../hooks/useAccounts.js'
 import { useTransactions } from '../hooks/useTransactions.js'
 import { useMoneyDetail } from '../hooks/useMoneyDetail.js'
 import { isLiability, typeLabel } from '../lib/accounts.js'
+import { effectOn } from '../lib/transactions.js'
+import { monthRange } from '../lib/budget.js'
 import { usd } from '../lib/format.js'
 import AccountForm from './AccountForm.jsx'
 import TransactionForm from './TransactionForm.jsx'
@@ -24,6 +26,15 @@ export default function MoneyScreen() {
 
   const assetTotal = assets.reduce((s, a) => s + Math.max(0, a.current_balance), 0)
   const debtTotal = debts.reduce((s, a) => s + Math.abs(Math.min(0, a.current_balance)), 0)
+
+  // High-water mark for the ring: where the accounts stood at the start of the
+  // month, or today if today is higher (a paycheck sets a new peak). Card spending
+  // moves nothing here on purpose — that money leaves when the card is paid.
+  const { endExclusive } = monthRange(monthKey)
+  const monthAssetDelta = transactions
+    .filter((t) => t.txn_date >= monthKey && t.txn_date < endExclusive)
+    .reduce((sum, t) => sum + assets.reduce((s, a) => s + effectOn(t, a.id), 0), 0)
+  const ringBaseline = Math.max(assetTotal - monthAssetDelta, assetTotal)
 
   return (
     <div className="screen">
@@ -48,10 +59,9 @@ export default function MoneyScreen() {
           <div className="networth__value">—</div>
         ) : (
           <>
-            <NetWorthRing assets={assetTotal} debt={debtTotal} netWorth={netWorth} />
+            <NetWorthRing netWorth={netWorth} assets={assetTotal} baseline={ringBaseline} />
             {debtTotal > 0 && (
               <div className="networth__split">
-                <span>{usd(assetTotal)} held</span>
                 <span style={{ color: 'var(--rose)' }}>{usd(debtTotal)} owed</span>
               </div>
             )}

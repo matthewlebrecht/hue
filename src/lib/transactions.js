@@ -17,7 +17,7 @@ export const kindLabel = (k) => TXN_KINDS.find((t) => t.value === k)?.label ?? k
  * forces a fragile constraint-name hint. Account and category names are resolved
  * client-side from lists we already hold.
  */
-export async function fetchTransactions({ limit = 100 } = {}) {
+export async function fetchTransactions({ limit = 400 } = {}) {
   const { data, error } = await supabase
     .from('transactions')
     .select(
