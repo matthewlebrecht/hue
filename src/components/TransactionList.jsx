@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { deleteTransaction, kindLabel } from '../lib/transactions.js'
+import { sentenceCase } from '../lib/text.js'
 import { usd } from '../lib/format.js'
 
 /** "Today" / "Yesterday" / "Mon, Jul 21" — dates are plain YYYY-MM-DD, parsed as local. */
@@ -44,7 +45,9 @@ export default function TransactionList({ transactions, accounts, categories }) 
               <button key={t.id} className="txn" onClick={() => setPending(t)}>
                 <div className="txn__main">
                   <div className="txn__desc">
-                    {t.description || categoryName(t.category_id) || kindLabel(t.kind)}
+                    {sentenceCase(
+                      t.description || categoryName(t.category_id) || kindLabel(t.kind)
+                    )}
                   </div>
                   <div className="txn__meta">
                     {t.kind === 'transfer'

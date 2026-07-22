@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { fetchMealIdeas, cachedIdeas, ageLabel } from '../lib/meals.js'
+import { titleCase, sentenceCase } from '../lib/text.js'
 
 /**
  * Meal ideas from what's on hand. Deliberately NOT auto-fetched on mount — this
@@ -50,23 +51,23 @@ export default function MealIdeas() {
 
       {result?.ideas?.length === 0 && (
         <div className="card" style={{ color: 'var(--text-faint)', fontSize: 14 }}>
-          {result.headline}
+          {sentenceCase(result.headline)}
         </div>
       )}
 
       {result?.ideas?.map((idea) => (
         <div className="card meal" key={idea.name}>
-          <div className="meal__name">{idea.name}</div>
-          <div className="meal__note">{idea.note}</div>
+          <div className="meal__name">{titleCase(idea.name)}</div>
+          <div className="meal__note">{sentenceCase(idea.note)}</div>
           <div className="meal__tags">
             {idea.have?.map((h) => (
               <span className="tag tag--have" key={`h-${h}`}>
-                {h}
+                {sentenceCase(h)}
               </span>
             ))}
             {idea.grab?.map((g) => (
               <span className="tag tag--grab" key={`g-${g}`}>
-                grab {g}
+                Grab {sentenceCase(g)}
               </span>
             ))}
           </div>

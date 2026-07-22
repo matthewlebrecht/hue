@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useInventory } from '../hooks/useInventory.js'
 import ShoppingList from './ShoppingList.jsx'
 import MealIdeas from './MealIdeas.jsx'
+import { sentenceCase } from '../lib/text.js'
 import {
   STATUSES,
   setStatus,
@@ -108,7 +109,7 @@ export default function KitchenScreen() {
               to pick up ·{' '}
               {lowOrOut
                 .slice(0, 6)
-                .map((i) => i.item)
+                .map((i) => sentenceCase(i.item))
                 .join(', ')}
               {lowOrOut.length > 6 ? '…' : ''}
             </span>
@@ -130,7 +131,7 @@ export default function KitchenScreen() {
         {items.map((i) => (
           <div key={i.id} className={`inv ${i.status !== 'ok' ? 'inv--flagged' : ''}`}>
             <button className="inv__name" onClick={() => setEditing(i)}>
-              <span>{i.item}</span>
+              <span>{sentenceCase(i.item)}</span>
               {i.qty_loose && <span className="inv__qty">{i.qty_loose}</span>}
             </button>
             <div className="inv__statuses">
@@ -290,7 +291,7 @@ function ItemSheet({ item, onClose }) {
   return (
     <div className="sheet-backdrop" onClick={onClose}>
       <div className="sheet" onClick={(e) => e.stopPropagation()}>
-        <div className="sheet__title">{item.item}</div>
+        <div className="sheet__title">{sentenceCase(item.item)}</div>
 
         <div className="field">
           <label className="field__label" htmlFor="inv-edit-name">

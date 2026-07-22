@@ -1,4 +1,5 @@
 import { supabase } from './supabase.js'
+import { sentenceCase } from './text.js'
 
 async function whoami() {
   const { data } = await supabase.auth.getUser()
@@ -123,5 +124,5 @@ export async function finishTrip(listRows) {
 export function listAsText(rows) {
   const outstanding = rows.filter((r) => !r.checked)
   if (outstanding.length === 0) return 'Nothing on the list.'
-  return outstanding.map((r) => `- ${r.item}`).join('\n')
+  return outstanding.map((r) => `- ${sentenceCase(r.item)}`).join('\n')
 }

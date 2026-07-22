@@ -99,12 +99,12 @@ export function useMoney() {
 function deriveStatus({ totalLimit, spend, assetTotal, ringBaseline }) {
   if (totalLimit > 0) {
     const pct = spend.total / totalLimit
-    if (pct > 1) return { tone: 'bad', line: `${usd(spend.total - totalLimit)} over budget` }
-    if (pct >= 0.9) return { tone: 'warn', line: 'close to budget' }
-    return { tone: 'ok', line: 'on track' }
+    if (pct > 1) return { tone: 'bad', line: `${usd(spend.total - totalLimit)} Over Budget` }
+    if (pct >= 0.9) return { tone: 'warn', line: 'Close to Budget' }
+    return { tone: 'ok', line: 'On Track' }
   }
   const left = ringBaseline > 0 ? assetTotal / ringBaseline : 1
-  if (assetTotal <= 0) return { tone: 'bad', line: 'accounts empty' }
-  if (left < 0.25) return { tone: 'warn', line: 'running low' }
-  return { tone: 'ok', line: 'on track' }
+  if (assetTotal <= 0) return { tone: 'bad', line: 'Accounts Empty' }
+  if (left < 0.25) return { tone: 'warn', line: 'Running Low' }
+  return { tone: 'ok', line: 'On Track' }
 }

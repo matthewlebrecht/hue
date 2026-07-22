@@ -37,7 +37,11 @@ const MEAL_SCHEMA = {
       items: {
         type: 'object',
         properties: {
-          name: { type: 'string', description: 'Short dish name, e.g. "Chicken stir-fry"' },
+          name: {
+            type: 'string',
+            description:
+              'Short dish name in Title Case, e.g. "Crispy Chicken Sandwich", "Mac and Cheese".',
+          },
           note: {
             type: 'string',
             description: 'One sentence on why it works tonight. Casual, not a recipe.',

@@ -2,6 +2,7 @@ import { useClock, timeParts } from '../hooks/useClock.js'
 import { useSchedule, eventTime } from '../hooks/useSchedule.js'
 import { useInventory } from '../hooks/useInventory.js'
 import { cachedIdeas } from '../lib/meals.js'
+import { sentenceCase } from '../lib/text.js'
 import { useMoney } from '../state/MoneyContext.jsx'
 import { usd } from '../lib/format.js'
 
@@ -55,7 +56,7 @@ export default function Dashboard({ onOpen, onRest }) {
           dot={lowOrOut.length === 0 ? 'ok' : out.length > 0 ? 'bad' : 'warn'}
         >
           {meals?.headline && (
-            <div className="zone__line zone__line--lead">{meals.headline}</div>
+            <div className="zone__line zone__line--lead">{sentenceCase(meals.headline)}</div>
           )}
           {lowOrOut.length === 0 ? (
             !meals?.headline && <div className="zone__line zone__line--lead">Stocked</div>
@@ -64,13 +65,13 @@ export default function Dashboard({ onOpen, onRest }) {
               {out.length > 0 && (
                 <div className="zone__line">
                   <span style={{ color: 'var(--rose)' }}>Out:</span>{' '}
-                  {out.map((i) => i.item).join(', ')}
+                  {out.map((i) => sentenceCase(i.item)).join(', ')}
                 </div>
               )}
               {low.length > 0 && (
                 <div className="zone__line">
                   <span style={{ color: 'var(--amber)' }}>Low:</span>{' '}
-                  {low.map((i) => i.item).join(', ')}
+                  {low.map((i) => sentenceCase(i.item)).join(', ')}
                 </div>
               )}
             </>

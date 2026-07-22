@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useShopping } from '../hooks/useShopping.js'
 import { setChecked, addAdHoc, removeRow, finishTrip, listAsText } from '../lib/shopping.js'
+import { sentenceCase } from '../lib/text.js'
 
 /**
  * The shared list. Both phones open this at the shop; ticking is live.
@@ -104,7 +105,9 @@ export default function ShoppingList({ inventoryItems, inventoryLoaded }) {
                 {row.checked ? '✓' : ''}
               </button>
               <button className="list-item" onClick={() => toggle(row)}>
-                <span className={row.checked ? 'list-item--done' : ''}>{row.item}</span>
+                <span className={row.checked ? 'list-item--done' : ''}>
+                  {sentenceCase(row.item)}
+                </span>
                 {row.checked && row.checked_by && (
                   <span className="list-by">{row.checked_by}</span>
                 )}
