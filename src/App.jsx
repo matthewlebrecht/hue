@@ -1,36 +1,42 @@
 import { useEffect, useState } from 'react'
-import { checkConnection } from './lib/supabase.js'
+import { supabase, checkConnection } from './lib/supabase.js'
+import AuthGate from './components/AuthGate.jsx'
+
+export default function App() {
+  return (
+    <AuthGate>
+      <Shell />
+    </AuthGate>
+  )
+}
 
 /**
- * v1 step 1 placeholder shell: proves the app boots and the Supabase client is wired.
- * The three-level shell (ambient -> dashboard -> detail) lands in v1 step 6.
+ * v1 step 1/2 placeholder: proves the app boots, the Supabase client is wired,
+ * and the schema + policies are live. The real three-level shell
+ * (ambient -> dashboard -> detail) lands in v1 step 6.
  */
-export default function App() {
+function Shell() {
   const [status, setStatus] = useState({ state: 'checking', detail: 'Reaching Supabase…' })
+  const [categories, setCategories] = useState(null)
 
   useEffect(() => {
-    let alive = true
-    checkConnection().then((r) => {
-      if (alive) setStatus({ state: r.ok ? 'ok' : 'bad', detail: r.detail })
-    })
-    return () => {
-      alive = false
-    }
+    checkConnection().then((r) =>
+      setStatus({ state: r.ok ? 'ok' : 'bad', detail: r.detail })
+    )
+    // the schema seeds 9 starter categories — a quick proof that reads work
+    supabase
+      .from('categories')
+      .select('name')
+      .order('name')
+      .then(({ data }) => setCategories(data ?? []))
   }, [])
 
   const dotClass =
     status.state === 'ok' ? 'dot--ok' : status.state === 'bad' ? 'dot--bad' : 'dot--warn'
 
   return (
-    <main
-      style={{
-        height: '100%',
-        display: 'grid',
-        placeItems: 'center',
-        padding: 'var(--gap)',
-      }}
-    >
-      <div className="card" style={{ minWidth: 320, textAlign: 'center' }}>
+    <main style={{ height: '100%', display: 'grid', placeItems: 'center', padding: 'var(--gap)' }}>
+      <div className="card" style={{ minWidth: 340, textAlign: 'center' }}>
         <div
           style={{
             fontSize: 40,
@@ -44,6 +50,7 @@ export default function App() {
         <div style={{ color: 'var(--text-faint)', fontSize: 13, marginBottom: 22 }}>
           household ambient dashboard
         </div>
+
         <div
           style={{
             display: 'flex',
@@ -57,6 +64,27 @@ export default function App() {
           <span className={`dot ${dotClass}`} />
           <span>{status.detail}</span>
         </div>
+
+        {categories && (
+          <div style={{ color: 'var(--text-faint)', fontSize: 12, marginTop: 10 }}>
+            {categories.length} categories · {categories.map((c) => c.name).join(', ')}
+          </div>
+        )}
+
+        <button
+          onClick={() => supabase.auth.signOut()}
+          style={{
+            marginTop: 24,
+            background: 'none',
+            border: '1px solid var(--hairline)',
+            borderRadius: 'var(--radius-sm)',
+            color: 'var(--text-faint)',
+            padding: '8px 14px',
+            fontSize: 13,
+          }}
+        >
+          Sign out
+        </button>
       </div>
     </main>
   )

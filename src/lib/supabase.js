@@ -34,8 +34,12 @@ export async function checkConnection() {
 
   if (error) {
     // 42P01 = relation does not exist -> connected, schema not run yet.
-    if (error.code === '42P01') {
+    if (error.code === '42P01' || error.code === 'PGRST205') {
       return { ok: false, detail: 'Connected, but the schema has not been run yet' }
+    }
+    // 42501 = RLS refused -> connected + schema present, policies missing.
+    if (error.code === '42501') {
+      return { ok: false, detail: 'Blocked by RLS — run hue_v1_rls.sql' }
     }
     return { ok: false, detail: error.message }
   }
