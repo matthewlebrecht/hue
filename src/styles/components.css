@@ -1,0 +1,232 @@
+/* ---------- screen scaffolding ---------- */
+.screen {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 28px 20px 80px;
+}
+
+.screen__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.screen__title {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.section-label {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin: 28px 0 12px;
+}
+
+/* ---------- net worth ---------- */
+.networth {
+  text-align: center;
+  padding: 28px 20px;
+  margin-bottom: 8px;
+}
+.networth__label {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 8px;
+}
+.networth__value {
+  font-size: 44px;
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- account tiles ---------- */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.tile {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  text-align: left;
+  width: 100%;
+  display: block;
+  transition: border-color 0.15s ease, transform 0.1s ease;
+}
+.tile:active {
+  transform: scale(0.985);
+  border-color: var(--accent);
+}
+
+.tile__name {
+  font-size: 15px;
+  margin-bottom: 2px;
+}
+.tile__type {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 14px;
+}
+.tile__balance {
+  font-size: 24px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+.tile__balance--neg {
+  color: var(--rose);
+}
+.tile__balance--pos {
+  color: var(--text);
+}
+.tile__sub {
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-top: 6px;
+}
+
+/* ---------- buttons ---------- */
+.btn {
+  border-radius: var(--radius-sm);
+  padding: 12px 18px;
+  font-size: 15px;
+  border: 1px solid var(--hairline);
+  background: var(--surface-raised);
+  color: var(--text);
+  min-height: 44px; /* touch target */
+}
+.btn:active {
+  transform: scale(0.98);
+}
+.btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #06232a;
+  font-weight: 600;
+}
+.btn--ghost {
+  background: none;
+  color: var(--text-dim);
+}
+.btn--danger {
+  background: none;
+  border-color: rgba(224, 122, 122, 0.4);
+  color: var(--rose);
+}
+.btn:disabled {
+  opacity: 0.5;
+}
+
+/* ---------- empty state ---------- */
+.empty {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--text-faint);
+}
+.empty p {
+  margin: 0 0 18px;
+  font-size: 15px;
+}
+
+/* ---------- modal / sheet ---------- */
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 7, 11, 0.72);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 50;
+}
+.sheet {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  padding: 24px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.sheet__title {
+  font-size: 19px;
+  margin-bottom: 20px;
+}
+
+/* ---------- form ---------- */
+.field {
+  margin-bottom: 16px;
+}
+.field__label {
+  display: block;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 7px;
+}
+.field__hint {
+  font-size: 12px;
+  color: var(--text-faint);
+  margin-top: 7px;
+  line-height: 1.45;
+}
+.input {
+  width: 100%;
+  padding: 13px 15px;
+  background: var(--bg);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 16px; /* >=16px stops iOS zooming the field on focus */
+  outline: none;
+}
+.input:focus {
+  border-color: var(--accent);
+}
+
+.seg {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.seg__opt {
+  padding: 12px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--hairline);
+  background: var(--bg);
+  color: var(--text-dim);
+  font-size: 14px;
+  min-height: 44px;
+}
+.seg__opt--on {
+  border-color: var(--accent);
+  background: rgba(77, 208, 225, 0.1);
+  color: var(--accent);
+}
+
+.form-error {
+  color: var(--rose);
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+.sheet__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+}
+.sheet__actions .btn {
+  flex: 1;
+}
