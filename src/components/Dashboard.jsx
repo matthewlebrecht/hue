@@ -1,6 +1,7 @@
 import { useClock, timeParts } from '../hooks/useClock.js'
 import { useSchedule, eventTime } from '../hooks/useSchedule.js'
 import { useInventory } from '../hooks/useInventory.js'
+import { cachedIdeas } from '../lib/meals.js'
 import { useMoney } from '../state/MoneyContext.jsx'
 import { usd } from '../lib/format.js'
 
@@ -14,6 +15,9 @@ export default function Dashboard({ onOpen, onRest }) {
   const { status, goals, spend } = useMoney()
   const { events } = useSchedule({ limit: 3 })
   const { lowOrOut } = useInventory()
+  // read-only: the headline is whatever the Kitchen screen last generated, so the
+  // dashboard never triggers a paid call of its own
+  const meals = cachedIdeas()
 
   const out = lowOrOut.filter((i) => i.status === 'out')
   const low = lowOrOut.filter((i) => i.status === 'low')
@@ -50,8 +54,11 @@ export default function Dashboard({ onOpen, onRest }) {
           onClick={() => onOpen('kitchen')}
           dot={lowOrOut.length === 0 ? 'ok' : out.length > 0 ? 'bad' : 'warn'}
         >
+          {meals?.headline && (
+            <div className="zone__line zone__line--lead">{meals.headline}</div>
+          )}
           {lowOrOut.length === 0 ? (
-            <div className="zone__line zone__line--lead">Stocked</div>
+            !meals?.headline && <div className="zone__line zone__line--lead">Stocked</div>
           ) : (
             <>
               {out.length > 0 && (

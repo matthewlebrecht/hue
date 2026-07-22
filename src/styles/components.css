@@ -219,6 +219,41 @@
   color: var(--rose);
 }
 
+/* ---------- meal ideas ---------- */
+.meal {
+  margin-bottom: 10px;
+  padding: 16px 18px;
+}
+.meal__name {
+  font-size: 17px;
+  margin-bottom: 5px;
+}
+.meal__note {
+  font-size: 14px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+.meal__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tag {
+  font-size: 11px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+}
+.tag--have {
+  color: var(--green);
+  border-color: rgba(95, 201, 160, 0.3);
+}
+.tag--grab {
+  color: var(--amber);
+  border-color: rgba(224, 164, 88, 0.3);
+}
+
 /* ---------- tabs ---------- */
 .tabs {
   display: flex;

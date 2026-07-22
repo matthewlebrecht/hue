@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useInventory } from '../hooks/useInventory.js'
 import ShoppingList from './ShoppingList.jsx'
+import MealIdeas from './MealIdeas.jsx'
 import {
   STATUSES,
   setStatus,
@@ -81,11 +82,18 @@ export default function KitchenScreen() {
         >
           Shopping list{lowOrOut.length > 0 ? ` · ${lowOrOut.length}` : ''}
         </button>
+        <button
+          className={`tab ${tab === 'meals' ? 'tab--on' : ''}`}
+          onClick={() => setTab('meals')}
+        >
+          Dinner
+        </button>
       </div>
 
       {error && <div className="form-error">{error}</div>}
 
       {tab === 'list' && <ShoppingList inventoryItems={items} inventoryLoaded={!loading} />}
+      {tab === 'meals' && <MealIdeas />}
 
       {tab === 'inventory' && (
         <>
