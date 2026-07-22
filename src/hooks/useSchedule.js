@@ -2,21 +2,29 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 
 /**
- * Upcoming calendar events. The `schedule` table is a read-only mirror that the
- * .ics feed fills in v3 — until then this correctly returns nothing, and the UI
- * says so rather than inventing an event.
+ * Upcoming calendar events, mirrored from .ics feeds by the calendar-sync
+ * function.
+ *
+ * The window starts at midnight rather than "now", and matches on ends_at as
+ * well as starts_at — otherwise a trip that began yesterday vanishes while
+ * you're still on it, and today's earlier events disappear by lunchtime.
  */
-export function useSchedule({ limit = 5 } = {}) {
+export function useSchedule({ limit = 60 } = {}) {
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
 
   const refresh = useCallback(async () => {
+    const start = new Date()
+    start.setHours(0, 0, 0, 0)
+    const iso = start.toISOString()
+
     const { data } = await supabase
       .from('schedule')
-      .select('id, title, starts_at, ends_at, who, location')
-      .gte('starts_at', new Date().toISOString())
+      .select('id, title, starts_at, ends_at, all_day, who, location')
+      .or(`ends_at.gte.${iso},starts_at.gte.${iso}`)
       .order('starts_at', { ascending: true })
       .limit(limit)
+
     setEvents(data ?? [])
     setLoading(false)
   }, [limit])
@@ -27,7 +35,7 @@ export function useSchedule({ limit = 5 } = {}) {
       .channel('hue-schedule')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'schedule' }, refresh)
       .subscribe()
-    // events fall out of "upcoming" as time passes, so re-poll on the quarter hour
+    // events roll out of the window as the day passes, and the day itself rolls over
     const timer = setInterval(refresh, 15 * 60 * 1000)
     return () => {
       supabase.removeChannel(channel)
@@ -35,9 +43,5 @@ export function useSchedule({ limit = 5 } = {}) {
     }
   }, [refresh])
 
-  return { events, next: events[0] ?? null, loading }
-}
-
-export function eventTime(iso) {
-  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  return { events, next: events[0] ?? null, loading, refresh }
 }

@@ -125,36 +125,54 @@ async function loadFeed(feed, windowStart, windowEnd) {
   for (const ve of comp.getAllSubcomponents('vevent')) {
     const event = new ICAL.Event(ve)
 
+    // Date-valued events (DTSTART;VALUE=DATE) are all-day: no time, no timezone.
+    const allDay = Boolean(event.startDate?.isDate)
+
     if (event.isRecurring()) {
       const iterator = event.iterator()
       let next
       let count = 0
       while ((next = iterator.next()) && count < MAX_OCCURRENCES) {
         count++
-        const start = next.toJSDate()
+        const start = instant(next, allDay)
         if (start > windowEnd) break
         const details = event.getOccurrenceDetails(next)
-        const end = details.endDate?.toJSDate() ?? null
+        const end = details.endDate ? instant(details.endDate, allDay) : null
         if ((end ?? start) < windowStart) continue
-        rows.push(toRow(event, feed, start, end, next.toString()))
+        rows.push(toRow(event, feed, start, end, next.toString(), allDay))
       }
     } else {
-      const start = event.startDate?.toJSDate()
-      if (!start) continue
-      const end = event.endDate?.toJSDate() ?? null
+      if (!event.startDate) continue
+      const start = instant(event.startDate, allDay)
+      const end = event.endDate ? instant(event.endDate, allDay) : null
       if (start > windowEnd || (end ?? start) < windowStart) continue
-      rows.push(toRow(event, feed, start, end, null))
+      rows.push(toRow(event, feed, start, end, null, allDay))
     }
   }
   return rows
 }
 
-function toRow(event, feed, start, end, recurrenceKey) {
+/**
+ * ICAL.Time -> JS Date.
+ *
+ * All-day events carry a bare calendar date with no timezone. Running that
+ * through the normal conversion lets the local offset move it — a Denver iPad
+ * renders "Aug 6 all day" as "Aug 5, 6:00 PM". Anchoring at UTC midnight instead
+ * keeps the date intact, and the client reads it back with UTC getters.
+ */
+function instant(time, allDay) {
+  if (allDay) return new Date(Date.UTC(time.year, time.month - 1, time.day))
+  return time.toJSDate()
+}
+
+function toRow(event, feed, start, end, recurrenceKey, allDay) {
   const uid = event.uid ?? `${feed.label ?? 'feed'}-${start.toISOString()}`
   return {
     title: event.summary?.trim() || 'Busy',
     starts_at: start.toISOString(),
+    // Left exclusive, as iCalendar defines it — the client subtracts the day.
     ends_at: end ? end.toISOString() : null,
+    all_day: allDay,
     who: feed.label,
     location: event.location?.trim() || null,
     source: 'ics',

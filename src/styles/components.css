@@ -229,6 +229,14 @@
 .event:last-child {
   border-bottom: none;
 }
+/* a trip spans days — mark it so it doesn't read as a 9am appointment */
+.event--span .event__when {
+  color: var(--amber);
+}
+.event--span {
+  background: rgba(224, 164, 88, 0.05);
+}
+
 .event__when {
   flex-shrink: 0;
   width: 72px;

@@ -1,5 +1,6 @@
 import { useClock, timeParts } from '../hooks/useClock.js'
-import { useSchedule, eventTime } from '../hooks/useSchedule.js'
+import { useSchedule } from '../hooks/useSchedule.js'
+import { upcoming, timeLabel, shortDay, startDay } from '../lib/schedule.js'
 import { useInventory } from '../hooks/useInventory.js'
 import { useMoney } from '../state/MoneyContext.jsx'
 
@@ -15,7 +16,8 @@ export default function AmbientScreen({ onWake }) {
   const now = useClock()
   const { time, meridiem, date } = timeParts(now)
   const { status, loading } = useMoney()
-  const { next } = useSchedule({ limit: 1 })
+  const { events } = useSchedule({ limit: 20 })
+  const next = upcoming(events, 1)[0] ?? null
   const { lowOrOut } = useInventory()
 
   return (
@@ -33,7 +35,12 @@ export default function AmbientScreen({ onWake }) {
       {/* one quiet line, only when there's something to say */}
       {(next || lowOrOut.length > 0) && (
         <div className="ambient__next">
-          {next && `Next: ${next.title} ${eventTime(next.starts_at)}`}
+          {next &&
+            (next.ongoing
+              ? next.event.title
+              : `Next: ${next.event.title} ${
+                  next.isToday ? timeLabel(next.event) : shortDay(startDay(next.event))
+                }`)}
           {next && lowOrOut.length > 0 && '  ·  '}
           {lowOrOut.length > 0 && `${lowOrOut.length} to pick up`}
         </div>

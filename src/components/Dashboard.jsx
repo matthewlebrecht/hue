@@ -1,5 +1,6 @@
 import { useClock, timeParts } from '../hooks/useClock.js'
-import { useSchedule, eventTime } from '../hooks/useSchedule.js'
+import { useSchedule } from '../hooks/useSchedule.js'
+import { upcoming, timeLabel, shortDay, startDay } from '../lib/schedule.js'
 import { useInventory } from '../hooks/useInventory.js'
 import { cachedIdeas } from '../lib/meals.js'
 import { sentenceCase } from '../lib/text.js'
@@ -14,7 +15,8 @@ export default function Dashboard({ onOpen, onRest }) {
   const now = useClock()
   const { time, meridiem, date } = timeParts(now)
   const { status, goals, spend } = useMoney()
-  const { events } = useSchedule({ limit: 3 })
+  const { events } = useSchedule({ limit: 60 })
+  const agenda = upcoming(events, 3)
   const { lowOrOut } = useInventory()
   // read-only: the headline is whatever the Kitchen screen last generated, so the
   // dashboard never triggers a paid call of its own
@@ -39,12 +41,19 @@ export default function Dashboard({ onOpen, onRest }) {
 
       <div className="zones">
         <Zone title="Today" onClick={() => onOpen('today')}>
-          {events.length === 0 ? (
-            <Waiting>Calendar feed lands in v3</Waiting>
+          {agenda.length === 0 ? (
+            <Waiting>Nothing scheduled — tap to sync the calendar</Waiting>
           ) : (
-            events.map((e) => (
-              <div key={e.id} className="zone__line">
-                <span className="zone__time">{eventTime(e.starts_at)}</span> {e.title}
+            agenda.map(({ event, ongoing, isToday }) => (
+              <div key={event.id} className="zone__line">
+                <span className="zone__time">
+                  {/* today needs no date; anything else does, or Friday reads as now */}
+                  {ongoing ? 'Now' : isToday ? timeLabel(event) : shortDay(startDay(event))}
+                </span>
+                {sentenceCase(event.title)}
+                {!isToday && !ongoing && !event.all_day && (
+                  <span className="zone__sub"> {timeLabel(event)}</span>
+                )}
               </div>
             ))
           )}

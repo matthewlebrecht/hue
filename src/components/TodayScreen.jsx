@@ -1,31 +1,11 @@
 import { useState } from 'react'
-import { useSchedule, eventTime } from '../hooks/useSchedule.js'
+import { useSchedule } from '../hooks/useSchedule.js'
 import { supabase } from '../lib/supabase.js'
 import { sentenceCase } from '../lib/text.js'
-
-/** "Today" / "Tomorrow" / "Wed, Jul 23" for a Date. */
-function dayLabel(date) {
-  const d = new Date(date)
-  d.setHours(0, 0, 0, 0)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const diff = Math.round((d - today) / 86400000)
-  if (diff === 0) return 'Today'
-  if (diff === 1) return 'Tomorrow'
-  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-}
-
-/** All-day events come through as exact midnight-to-midnight spans. */
-function isAllDay(e) {
-  const s = new Date(e.starts_at)
-  if (s.getHours() || s.getMinutes()) return false
-  if (!e.ends_at) return true
-  const len = new Date(e.ends_at) - s
-  return len % 86400000 === 0 && len > 0
-}
+import { groupByDay, timeLabel, rangeLabel } from '../lib/schedule.js'
 
 export default function TodayScreen() {
-  const { events, loading, refresh } = useSchedule({ limit: 60 })
+  const { events, loading, refresh } = useSchedule({ limit: 200 })
   const [syncing, setSyncing] = useState(false)
   const [error, setError] = useState(null)
   const [note, setNote] = useState(null)
@@ -48,12 +28,7 @@ export default function TodayScreen() {
     }
   }
 
-  const groups = []
-  for (const e of events) {
-    const label = dayLabel(e.starts_at)
-    if (groups.at(-1)?.label !== label) groups.push({ label, items: [] })
-    groups.at(-1).items.push(e)
-  }
+  const days = groupByDay(events, { days: 30 })
 
   return (
     <div className="screen">
@@ -71,7 +46,7 @@ export default function TodayScreen() {
         </div>
       )}
 
-      {!loading && events.length === 0 && (
+      {!loading && days.length === 0 && (
         <div className="empty">
           <p>
             Nothing on the calendar. If this looks wrong, tap Sync now — HUE mirrors published
@@ -80,20 +55,28 @@ export default function TodayScreen() {
         </div>
       )}
 
-      {groups.map((g) => (
-        <div key={g.label}>
-          <div className="section-label">{g.label}</div>
+      {days.map((group) => (
+        <div key={group.label}>
+          <div className="section-label">{group.label}</div>
           <div className="txn-group">
-            {g.items.map((e) => (
-              <div key={e.id} className="event">
-                <div className="event__when">
-                  {isAllDay(e) ? 'All day' : eventTime(e.starts_at)}
-                </div>
+            {group.items.map(({ event, dayIndex, dayCount }) => (
+              <div
+                key={`${event.id}-${dayIndex}`}
+                className={`event ${dayCount > 1 ? 'event--span' : ''}`}
+              >
+                <div className="event__when">{timeLabel(event)}</div>
                 <div className="event__main">
-                  <div className="event__title">{sentenceCase(e.title)}</div>
-                  {(e.location || e.who) && (
+                  <div className="event__title">{sentenceCase(event.title)}</div>
+                  {(event.location || event.who || dayCount > 1) && (
                     <div className="event__meta">
-                      {[e.who, e.location].filter(Boolean).join(' · ')}
+                      {[
+                        // "Day 2 of 4" is the thing you actually want mid-trip
+                        dayCount > 1 ? `Day ${dayIndex} of ${dayCount} · ${rangeLabel(event)}` : null,
+                        event.who,
+                        event.location,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
                     </div>
                   )}
                 </div>
