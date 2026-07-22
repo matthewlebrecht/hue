@@ -1,10 +1,6 @@
 import { useState } from 'react'
-import { useAccounts } from '../hooks/useAccounts.js'
-import { useTransactions } from '../hooks/useTransactions.js'
-import { useMoneyDetail } from '../hooks/useMoneyDetail.js'
-import { isLiability, typeLabel } from '../lib/accounts.js'
-import { effectOn } from '../lib/transactions.js'
-import { monthRange } from '../lib/budget.js'
+import { useMoney } from '../state/MoneyContext.jsx'
+import { typeLabel } from '../lib/accounts.js'
 import { usd } from '../lib/format.js'
 import AccountForm from './AccountForm.jsx'
 import TransactionForm from './TransactionForm.jsx'
@@ -14,27 +10,28 @@ import BudgetSection from './BudgetSection.jsx'
 import GoalsSection from './GoalsSection.jsx'
 
 export default function MoneyScreen() {
-  const { accounts, netWorth, loading, error } = useAccounts()
-  const { transactions, categories, error: txnError } = useTransactions()
-  const { monthKey, budget, spend, goals, monthlyIncome, error: detailError, refresh } =
-    useMoneyDetail()
+  const {
+    accounts,
+    assets,
+    debts,
+    assetTotal,
+    debtTotal,
+    netWorth,
+    ringBaseline,
+    transactions,
+    categories,
+    monthKey,
+    budget,
+    spend,
+    goals,
+    monthlyIncome,
+    loading,
+    error,
+    refresh,
+  } = useMoney()
+
   const [editingAccount, setEditingAccount] = useState(null) // account | 'new' | null
   const [addingTxn, setAddingTxn] = useState(false)
-
-  const assets = accounts.filter((a) => !isLiability(a.type))
-  const debts = accounts.filter((a) => isLiability(a.type))
-
-  const assetTotal = assets.reduce((s, a) => s + Math.max(0, a.current_balance), 0)
-  const debtTotal = debts.reduce((s, a) => s + Math.abs(Math.min(0, a.current_balance)), 0)
-
-  // High-water mark for the ring: where the accounts stood at the start of the
-  // month, or today if today is higher (a paycheck sets a new peak). Card spending
-  // moves nothing here on purpose — that money leaves when the card is paid.
-  const { endExclusive } = monthRange(monthKey)
-  const monthAssetDelta = transactions
-    .filter((t) => t.txn_date >= monthKey && t.txn_date < endExclusive)
-    .reduce((sum, t) => sum + assets.reduce((s, a) => s + effectOn(t, a.id), 0), 0)
-  const ringBaseline = Math.max(assetTotal - monthAssetDelta, assetTotal)
 
   return (
     <div className="screen">
@@ -69,9 +66,9 @@ export default function MoneyScreen() {
         )}
       </div>
 
-      {(error || txnError || detailError) && (
+      {error && (
         <div className="form-error" style={{ marginTop: 16 }}>
-          {error || txnError || detailError}
+          {error}
         </div>
       )}
 

@@ -1,0 +1,38 @@
+import { useClock, timeParts } from '../hooks/useClock.js'
+import { useSchedule, eventTime } from '../hooks/useSchedule.js'
+import { useMoney } from '../state/MoneyContext.jsx'
+
+/**
+ * Level 1 — resting state. Glanceable from across the kitchen.
+ *
+ * Deliberately holds ONE money signal and no numbers: a dot. Real figures are a
+ * tap away. Weather and the commute pill land in v3 with their feeds; nothing
+ * fake stands in for them, because a wrong temperature on the counter is worse
+ * than no temperature.
+ */
+export default function AmbientScreen({ onWake }) {
+  const now = useClock()
+  const { time, meridiem, date } = timeParts(now)
+  const { status, loading } = useMoney()
+  const { next } = useSchedule({ limit: 1 })
+
+  return (
+    <button className="ambient" onClick={onWake} aria-label="Open dashboard">
+      <div className="ambient__clock">
+        {time}
+        <span className="ambient__meridiem">{meridiem}</span>
+      </div>
+      <div className="ambient__date">{date}</div>
+
+      <div className="ambient__row">
+        {!loading && <span className={`dot dot--${status.tone}`} />}
+      </div>
+
+      {next && (
+        <div className="ambient__next">
+          Next: {next.title} {eventTime(next.starts_at)}
+        </div>
+      )}
+    </button>
+  )
+}
