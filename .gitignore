@@ -1,0 +1,17 @@
+node_modules
+dist
+dist-ssr
+*.local
+
+# secrets — never commit
+.env
+.env.*
+!.env.example
+
+# editor / os
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.log
+npm-debug.log*

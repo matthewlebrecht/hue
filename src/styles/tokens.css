@@ -1,0 +1,29 @@
+/* HUE design tokens — dark, calm, cool. "Whisper, don't shout." */
+:root {
+  /* surfaces */
+  --bg: #0a0e14;
+  --surface: #111823;
+  --surface-raised: #16202e;
+  --hairline: #1f2b3a;
+
+  /* text */
+  --text: #e6edf5;
+  --text-dim: #8fa1b5;
+  --text-faint: #5b6c80;
+
+  /* accents */
+  --accent: #4dd0e1; /* cyan — primary */
+  --amber: #e0a458; /* time-sensitive / commute */
+  --rose: #e07a7a; /* debt / over budget */
+  --green: #5fc9a0; /* ok / positive */
+
+  /* geometry */
+  --radius: 18px;
+  --radius-sm: 12px;
+  --gap: 20px;
+
+  /* type */
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto,
+    system-ui, sans-serif;
+  --font-num: 'SF Mono', 'Segoe UI', system-ui, sans-serif;
+}
