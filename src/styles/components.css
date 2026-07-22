@@ -219,6 +219,36 @@
   color: var(--rose);
 }
 
+/* ---------- calendar events ---------- */
+.event {
+  display: flex;
+  gap: 14px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--hairline);
+}
+.event:last-child {
+  border-bottom: none;
+}
+.event__when {
+  flex-shrink: 0;
+  width: 72px;
+  font-size: 13px;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  padding-top: 1px;
+}
+.event__main {
+  min-width: 0;
+}
+.event__title {
+  font-size: 15px;
+  margin-bottom: 3px;
+}
+.event__meta {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
 /* ---------- meal ideas ---------- */
 .meal {
   margin-bottom: 10px;

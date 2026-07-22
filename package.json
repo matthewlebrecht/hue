@@ -9,7 +9,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "sb": "supabase",
-    "deploy:meals": "supabase functions deploy meal-ideas"
+    "deploy:meals": "supabase functions deploy meal-ideas",
+    "deploy:calendar": "supabase functions deploy calendar-sync"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.58.0",

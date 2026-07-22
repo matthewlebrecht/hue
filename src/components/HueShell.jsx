@@ -5,6 +5,7 @@ import AmbientScreen from './AmbientScreen.jsx'
 import Dashboard from './Dashboard.jsx'
 import MoneyScreen from './MoneyScreen.jsx'
 import KitchenScreen from './KitchenScreen.jsx'
+import TodayScreen from './TodayScreen.jsx'
 import PlaceholderScreen from './PlaceholderScreen.jsx'
 import { supabase } from '../lib/supabase.js'
 
@@ -42,14 +43,7 @@ function renderDetail(view) {
     case 'money':
       return <MoneyScreen />
     case 'today':
-      return (
-        <PlaceholderScreen title="Today" phase="v3">
-          The full week, mirrored read-only from Apple Calendar. Both calendars publish an{' '}
-          <code>.ics</code> feed that HUE fetches on a schedule and writes into the{' '}
-          <code>schedule</code> table — which already exists and is already wired to the
-          Today zone. Nothing here until that fetch job is built.
-        </PlaceholderScreen>
-      )
+      return <TodayScreen />
     case 'kitchen':
       return <KitchenScreen />
     case 'packages':
