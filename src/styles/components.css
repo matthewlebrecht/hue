@@ -210,10 +210,77 @@
   font-size: 14px;
   min-height: 44px;
 }
+.seg--4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+.seg--4 .seg__opt {
+  padding: 12px 4px;
+  font-size: 13px;
+}
 .seg__opt--on {
   border-color: var(--accent);
   background: rgba(77, 208, 225, 0.1);
   color: var(--accent);
+}
+
+/* ---------- transaction rows ---------- */
+.txn-group {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.txn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 15px 20px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--hairline);
+  text-align: left;
+}
+.txn:last-child {
+  border-bottom: none;
+}
+.txn:active {
+  background: var(--surface-raised);
+}
+
+.txn__main {
+  min-width: 0;
+}
+.txn__desc {
+  font-size: 15px;
+  margin-bottom: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.txn__meta {
+  font-size: 12px;
+  color: var(--text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.txn__amount {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.txn__amount--pos {
+  color: var(--green);
+}
+.txn__amount--neg {
+  color: var(--text);
+}
+.txn__amount--flat {
+  color: var(--text-faint);
 }
 
 .form-error {

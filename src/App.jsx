@@ -1,12 +1,12 @@
 import { supabase } from './lib/supabase.js'
 import AuthGate from './components/AuthGate.jsx'
-import AccountsScreen from './components/AccountsScreen.jsx'
+import MoneyScreen from './components/MoneyScreen.jsx'
 
 export default function App() {
   return (
     <AuthGate>
       <div style={{ minHeight: '100%' }}>
-        <AccountsScreen />
+        <MoneyScreen />
         <div style={{ textAlign: 'center', paddingBottom: 32 }}>
           <button
             onClick={() => supabase.auth.signOut()}

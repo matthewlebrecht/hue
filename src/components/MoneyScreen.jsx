@@ -1,12 +1,17 @@
 import { useState } from 'react'
 import { useAccounts } from '../hooks/useAccounts.js'
+import { useTransactions } from '../hooks/useTransactions.js'
 import { isLiability, typeLabel } from '../lib/accounts.js'
 import { usd, usdWhole } from '../lib/format.js'
 import AccountForm from './AccountForm.jsx'
+import TransactionForm from './TransactionForm.jsx'
+import TransactionList from './TransactionList.jsx'
 
-export default function AccountsScreen() {
+export default function MoneyScreen() {
   const { accounts, netWorth, loading, error } = useAccounts()
-  const [editing, setEditing] = useState(null) // account object, or 'new', or null
+  const { transactions, categories, error: txnError } = useTransactions()
+  const [editingAccount, setEditingAccount] = useState(null) // account | 'new' | null
+  const [addingTxn, setAddingTxn] = useState(false)
 
   const assets = accounts.filter((a) => !isLiability(a.type))
   const debts = accounts.filter((a) => isLiability(a.type))
@@ -15,9 +20,18 @@ export default function AccountsScreen() {
     <div className="screen">
       <div className="screen__head">
         <div className="screen__title">Money</div>
-        <button className="btn" onClick={() => setEditing('new')}>
-          + Account
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn" onClick={() => setEditingAccount('new')}>
+            + Account
+          </button>
+          <button
+            className="btn btn--primary"
+            onClick={() => setAddingTxn(true)}
+            disabled={accounts.length === 0}
+          >
+            + Transaction
+          </button>
+        </div>
       </div>
 
       <div className="card networth">
@@ -30,16 +44,19 @@ export default function AccountsScreen() {
         </div>
       </div>
 
-      {error && (
+      {(error || txnError) && (
         <div className="form-error" style={{ marginTop: 16 }}>
-          {error}
+          {error || txnError}
         </div>
       )}
 
       {!loading && accounts.length === 0 && (
         <div className="empty">
-          <p>No accounts yet. Add checking, savings, cards and loans — balances compute forward from what you enter.</p>
-          <button className="btn btn--primary" onClick={() => setEditing('new')}>
+          <p>
+            No accounts yet. Add checking, savings, cards and loans — balances compute forward
+            from what you enter.
+          </p>
+          <button className="btn btn--primary" onClick={() => setEditingAccount('new')}>
             Add the first account
           </button>
         </div>
@@ -48,21 +65,42 @@ export default function AccountsScreen() {
       {assets.length > 0 && (
         <>
           <div className="section-label">Accounts</div>
-          <Tiles accounts={assets} onEdit={setEditing} />
+          <Tiles accounts={assets} onEdit={setEditingAccount} />
         </>
       )}
 
       {debts.length > 0 && (
         <>
           <div className="section-label">Debt</div>
-          <Tiles accounts={debts} onEdit={setEditing} />
+          <Tiles accounts={debts} onEdit={setEditingAccount} />
         </>
       )}
 
-      {editing && (
+      {accounts.length > 0 && (
+        <>
+          <div className="section-label" style={{ marginTop: 36 }}>
+            Activity
+          </div>
+          <TransactionList
+            transactions={transactions}
+            accounts={accounts}
+            categories={categories}
+          />
+        </>
+      )}
+
+      {editingAccount && (
         <AccountForm
-          account={editing === 'new' ? null : editing}
-          onClose={() => setEditing(null)}
+          account={editingAccount === 'new' ? null : editingAccount}
+          onClose={() => setEditingAccount(null)}
+        />
+      )}
+
+      {addingTxn && (
+        <TransactionForm
+          accounts={accounts}
+          categories={categories}
+          onClose={() => setAddingTxn(false)}
         />
       )}
     </div>
@@ -85,9 +123,7 @@ function Tiles({ accounts, onEdit }) {
             >
               {usd(a.current_balance)}
             </div>
-            {drifted && (
-              <div className="tile__sub">started at {usd(a.starting_balance)}</div>
-            )}
+            {drifted && <div className="tile__sub">started at {usd(a.starting_balance)}</div>}
           </button>
         )
       })}
