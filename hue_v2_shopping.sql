@@ -24,6 +24,10 @@ create table if not exists shopping_list (
 
 -- One list row per tracked item — this is what makes the auto-sync safe to run
 -- from two devices at once: the second insert conflicts instead of duplicating.
+--
+-- Partial on purpose: ad-hoc rows all carry a null inventory_id and must not
+-- collide with each other. Note this index cannot be used by ON CONFLICT unless
+-- the predicate is repeated, so the app inserts and tolerates 23505 instead.
 create unique index if not exists shopping_list_inventory_uniq
   on shopping_list (inventory_id)
   where inventory_id is not null;

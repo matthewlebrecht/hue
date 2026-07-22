@@ -33,13 +33,22 @@ export async function syncFromInventory(inventoryItems, listRows) {
   const missing = needed.filter((i) => !rowByInventoryId.has(i.id))
 
   if (missing.length > 0) {
-    const { error } = await supabase
-      .from('shopping_list')
-      .upsert(
-        missing.map((i) => ({ item: i.item, inventory_id: i.id })),
-        { onConflict: 'inventory_id', ignoreDuplicates: true }
+    // Plain inserts, one per item, rather than an upsert: the unique index is
+    // PARTIAL (only rows with an inventory_id), and ON CONFLICT can't infer a
+    // partial index without repeating its predicate — which PostgREST's
+    // on_conflict, being column names only, has no way to express.
+    //
+    // One request per row on purpose: a batch aborts entirely if any single row
+    // conflicts, which would drop the other items until the next pass.
+    const results = await Promise.all(
+      missing.map((i) =>
+        supabase.from('shopping_list').insert({ item: i.item, inventory_id: i.id })
       )
-    if (error) throw error
+    )
+    // 23505 = the other device won the race and inserted it first. That's the
+    // index doing its job, not a failure.
+    const failure = results.find((r) => r.error && r.error.code !== '23505')
+    if (failure) throw failure.error
   }
 
   const neededIds = new Set(needed.map((i) => i.id))
