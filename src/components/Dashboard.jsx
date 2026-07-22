@@ -1,5 +1,6 @@
 import { useClock, timeParts } from '../hooks/useClock.js'
 import { useSchedule, eventTime } from '../hooks/useSchedule.js'
+import { useInventory } from '../hooks/useInventory.js'
 import { useMoney } from '../state/MoneyContext.jsx'
 import { usd } from '../lib/format.js'
 
@@ -10,9 +11,12 @@ import { usd } from '../lib/format.js'
 export default function Dashboard({ onOpen, onRest }) {
   const now = useClock()
   const { time, meridiem, date } = timeParts(now)
-  const { status, goals, spend, monthKey } = useMoney()
+  const { status, goals, spend } = useMoney()
   const { events } = useSchedule({ limit: 3 })
+  const { lowOrOut } = useInventory()
 
+  const out = lowOrOut.filter((i) => i.status === 'out')
+  const low = lowOrOut.filter((i) => i.status === 'low')
   const topGoal = goals.find((g) => g.progress !== null) ?? goals[0] ?? null
 
   return (
@@ -41,8 +45,29 @@ export default function Dashboard({ onOpen, onRest }) {
           )}
         </Zone>
 
-        <Zone title="Kitchen" onClick={() => onOpen('kitchen')}>
-          <Waiting>Inventory and meal ideas arrive in v2</Waiting>
+        <Zone
+          title="Kitchen"
+          onClick={() => onOpen('kitchen')}
+          dot={lowOrOut.length === 0 ? 'ok' : out.length > 0 ? 'bad' : 'warn'}
+        >
+          {lowOrOut.length === 0 ? (
+            <div className="zone__line zone__line--lead">Stocked</div>
+          ) : (
+            <>
+              {out.length > 0 && (
+                <div className="zone__line">
+                  <span style={{ color: 'var(--rose)' }}>Out:</span>{' '}
+                  {out.map((i) => i.item).join(', ')}
+                </div>
+              )}
+              {low.length > 0 && (
+                <div className="zone__line">
+                  <span style={{ color: 'var(--amber)' }}>Low:</span>{' '}
+                  {low.map((i) => i.item).join(', ')}
+                </div>
+              )}
+            </>
+          )}
         </Zone>
 
         <Zone title="Money" onClick={() => onOpen('money')} dot={status.tone}>

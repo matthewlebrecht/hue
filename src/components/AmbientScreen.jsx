@@ -1,5 +1,6 @@
 import { useClock, timeParts } from '../hooks/useClock.js'
 import { useSchedule, eventTime } from '../hooks/useSchedule.js'
+import { useInventory } from '../hooks/useInventory.js'
 import { useMoney } from '../state/MoneyContext.jsx'
 
 /**
@@ -15,6 +16,7 @@ export default function AmbientScreen({ onWake }) {
   const { time, meridiem, date } = timeParts(now)
   const { status, loading } = useMoney()
   const { next } = useSchedule({ limit: 1 })
+  const { lowOrOut } = useInventory()
 
   return (
     <button className="ambient" onClick={onWake} aria-label="Open dashboard">
@@ -28,9 +30,12 @@ export default function AmbientScreen({ onWake }) {
         {!loading && <span className={`dot dot--${status.tone}`} />}
       </div>
 
-      {next && (
+      {/* one quiet line, only when there's something to say */}
+      {(next || lowOrOut.length > 0) && (
         <div className="ambient__next">
-          Next: {next.title} {eventTime(next.starts_at)}
+          {next && `Next: ${next.title} ${eventTime(next.starts_at)}`}
+          {next && lowOrOut.length > 0 && '  ·  '}
+          {lowOrOut.length > 0 && `${lowOrOut.length} to pick up`}
         </div>
       )}
     </button>

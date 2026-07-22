@@ -140,6 +140,85 @@
   line-height: 1.5;
 }
 
+/* ---------- kitchen inventory ---------- */
+.kitchen-summary {
+  font-size: 15px;
+  color: var(--text-dim);
+  margin-bottom: 20px;
+}
+.kitchen-summary__count {
+  font-size: 22px;
+  color: var(--amber);
+  font-variant-numeric: tabular-nums;
+}
+
+.inv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 10px;
+}
+
+.inv {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px 10px 16px;
+}
+.inv--flagged {
+  border-color: rgba(224, 164, 88, 0.35);
+}
+
+.inv__name {
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 15px;
+  padding: 8px 0;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.inv__qty {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.inv__statuses {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.inv__status {
+  min-width: 52px;
+  min-height: 44px;
+  border-radius: 10px;
+  border: 1px solid var(--hairline);
+  background: var(--bg);
+  color: var(--text-faint);
+  font-size: 13px;
+}
+.inv__status--on.inv__status--ok {
+  background: rgba(95, 201, 160, 0.16);
+  border-color: var(--green);
+  color: var(--green);
+}
+.inv__status--on.inv__status--low {
+  background: rgba(224, 164, 88, 0.16);
+  border-color: var(--amber);
+  color: var(--amber);
+}
+.inv__status--on.inv__status--out {
+  background: rgba(224, 122, 122, 0.16);
+  border-color: var(--rose);
+  color: var(--rose);
+}
+
 /* ---------- level 3: detail chrome ---------- */
 .detail__bar {
   display: flex;

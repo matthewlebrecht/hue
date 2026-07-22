@@ -4,6 +4,7 @@ import { MoneyProvider } from '../state/MoneyContext.jsx'
 import AmbientScreen from './AmbientScreen.jsx'
 import Dashboard from './Dashboard.jsx'
 import MoneyScreen from './MoneyScreen.jsx'
+import KitchenScreen from './KitchenScreen.jsx'
 import PlaceholderScreen from './PlaceholderScreen.jsx'
 import { supabase } from '../lib/supabase.js'
 
@@ -50,13 +51,7 @@ function renderDetail(view) {
         </PlaceholderScreen>
       )
     case 'kitchen':
-      return (
-        <PlaceholderScreen title="Kitchen" phase="v2">
-          Inventory grid with one-tap ok / low / out, an add-item field, and the "just
-          restocked" shortcut. Anything low or out rolls into a shopping list both phones can
-          check off live. Meal ideas come after, from the same inventory.
-        </PlaceholderScreen>
-      )
+      return <KitchenScreen />
     case 'packages':
       return (
         <PlaceholderScreen title="Packages" phase="v3">
