@@ -15,7 +15,7 @@ const DESTINATIONS = [
  * decision.
  */
 export default function CommuteScreen() {
-  const { plans, connections, config, saveConfig, live, lastRefresh, loading, error } =
+  const { plans, connections, outbound, config, saveConfig, live, lastRefresh, loading, error } =
     useCommute()
   const [refreshing, setRefreshing] = useState(false)
   const [refreshError, setRefreshError] = useState(null)
@@ -82,6 +82,30 @@ export default function CommuteScreen() {
                     {c.cityCenter ? ` · City Center ${clock(c.cityCenter)}` : ''} · {
                       Math.round(c.wait / 60)
                     } min transfer
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {outbound.length > 0 && (
+        <>
+          <div className="section-label" style={{ marginTop: 32 }}>
+            Other direction · S-Line at 300 East
+          </div>
+          <div className="txn-group">
+            {outbound.map((t) => (
+              <div key={t.tripId} className="event">
+                <div className="event__when">{clock(t.at300East)}</div>
+                <div className="event__main">
+                  <div className="event__title">
+                    Eastbound{t.headsign ? ` · ${t.headsign}` : ''}
+                  </div>
+                  <div className="event__meta">
+                    Leaves Central Pointe {clock(t.centralPointe)} — the ride home, and the way
+                    out to Sugar House
                   </div>
                 </div>
               </div>

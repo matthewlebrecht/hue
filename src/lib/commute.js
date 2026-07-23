@@ -262,6 +262,44 @@ export function commutePlan(now, data, { arriveBy, destination }) {
   return plan.recommended ? { ...plan, day: 'tomorrow', date: tomorrow } : null
 }
 
+/**
+ * The other direction: S-Line trains that reach 300 East heading east.
+ *
+ * Not a connection — there's no transfer to protect, it's a single train. It's
+ * the ride home from Central Pointe and the ride out toward Sugar House, which
+ * are the same train at the same moment.
+ */
+export function outboundDepartures(now, data, count = 3) {
+  const todayServices = activeServices(now, data.services, data.exceptions)
+  const yesterday = new Date(now.getTime() - 86400000)
+  const yesterdayServices = activeServices(yesterday, data.services, data.exceptions)
+  const nowS = secondsInto(now)
+
+  const out = []
+  for (const offset of [0, -1]) {
+    for (const t of data.trips) {
+      if (t.leg !== 'sline_out') continue
+      const runs =
+        offset === 0
+          ? todayServices.has(t.service_id)
+          : yesterdayServices.has(t.service_id) && t.depart_s >= 86400
+      if (!runs) continue
+      const shift = offset === -1 ? -86400 : 0
+      out.push({
+        tripId: t.trip_id,
+        headsign: t.headsign,
+        centralPointe: t.depart_s + shift,
+        at300East: t.arrive_s + shift,
+      })
+    }
+  }
+
+  return out
+    .filter((t) => t.at300East >= nowS)
+    .sort((a, b) => a.at300East - b.at300East)
+    .slice(0, count)
+}
+
 /** Seconds-after-midnight -> "7:44 AM". Handles values past 24h. */
 export function clock(seconds) {
   if (seconds == null) return null

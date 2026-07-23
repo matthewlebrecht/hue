@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
-import { fetchTransit, nextConnections, commutePlan, applyLive } from '../lib/commute.js'
+import {
+  fetchTransit,
+  nextConnections,
+  commutePlan,
+  applyLive,
+  outboundDepartures,
+} from '../lib/commute.js'
 import { getSetting, setSetting, DEFAULT_COMMUTE } from '../lib/settings.js'
 import { supabase } from '../lib/supabase.js'
 
@@ -64,6 +70,7 @@ export function useCommute() {
 
   const now = new Date()
   const connections = data ? nextConnections(now, data, 4).map((c) => applyLive(c, live?.updates)) : []
+  const outbound = data ? outboundDepartures(now, data, 3) : []
 
   const riders = (config?.riders ?? []).filter((r) => r.enabled)
   const plans = data
@@ -99,6 +106,7 @@ export function useCommute() {
 
   return {
     connections,
+    outbound,
     plans,
     config,
     saveConfig,
