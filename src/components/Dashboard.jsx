@@ -1,8 +1,9 @@
 import { useClock, timeParts } from '../hooks/useClock.js'
 import { useSchedule } from '../hooks/useSchedule.js'
-import { upcoming, timeLabel, shortDay, startDay } from '../lib/schedule.js'
+import { upcoming, comingUp, timeLabel, shortDay, startDay } from '../lib/schedule.js'
 import { useWeather } from '../hooks/useWeather.js'
 import { describe, advice } from '../lib/weather.js'
+import { cachedBriefing } from '../lib/briefing.js'
 import { useInventory } from '../hooks/useInventory.js'
 import { cachedIdeas } from '../lib/meals.js'
 import { sentenceCase } from '../lib/text.js'
@@ -19,8 +20,11 @@ export default function Dashboard({ onOpen, onRest }) {
   const { status, goals, spend } = useMoney()
   const { events } = useSchedule({ limit: 60 })
   const agenda = upcoming(events, 3)
+  const horizon = comingUp(events, { limit: 3 })
   const { weather } = useWeather()
   const hint = advice(weather)
+  // read-only: the dashboard shows today's briefing if one exists, never writes one
+  const briefing = cachedBriefing()
   const { lowOrOut } = useInventory()
   // read-only: the headline is whatever the Kitchen screen last generated, so the
   // dashboard never triggers a paid call of its own
@@ -113,14 +117,25 @@ export default function Dashboard({ onOpen, onRest }) {
           )}
         </Zone>
 
-        <Zone title="Packages" onClick={() => onOpen('packages')}>
-          <Waiting>Gmail delivery tracking arrives in v3</Waiting>
+        <Zone title="Coming up" onClick={() => onOpen('upcoming')}>
+          {horizon.length === 0 ? (
+            <Waiting>Nothing on the horizon</Waiting>
+          ) : (
+            horizon.map(({ event, when }) => (
+              <div key={event.id} className="zone__line">
+                <span className="zone__time">{when}</span>
+                {sentenceCase(event.title)}
+              </div>
+            ))
+          )}
         </Zone>
 
         <Zone title="Briefing" wide onClick={() => onOpen('briefing')}>
-          <Waiting>
-            The morning briefing needs the calendar, weather and kitchen feeds first — v3
-          </Waiting>
+          {briefing ? (
+            <div className="zone__briefing">{briefing.text}</div>
+          ) : (
+            <Waiting>Tap for this morning's briefing</Waiting>
+          )}
         </Zone>
       </div>
     </div>

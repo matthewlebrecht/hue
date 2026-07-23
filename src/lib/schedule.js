@@ -129,6 +129,35 @@ export function groupByDay(events, { days = 30 } = {}) {
 }
 
 /**
+ * Things on the horizon rather than things happening now — trips, all-day
+ * markers, anything beyond today. Today's own events are the Today zone's job;
+ * repeating them here would just be the same list twice.
+ *
+ * Multi-day and all-day items sort first: a trip is the thing you actually want
+ * warning about, and it's the thing a time-ordered list buries.
+ */
+export function comingUp(events, { limit = 5, days = 45 } = {}) {
+  const start = today()
+  const tomorrow = new Date(start.getTime() + DAY_MS)
+  const horizon = new Date(start.getTime() + days * DAY_MS)
+
+  return events
+    .filter((e) => startDay(e) >= tomorrow && startDay(e) <= horizon)
+    .sort((a, b) => {
+      const aBig = a.all_day || isMultiDay(a)
+      const bBig = b.all_day || isMultiDay(b)
+      if (aBig !== bBig) return aBig ? -1 : 1
+      return startDay(a) - startDay(b)
+    })
+    .slice(0, limit)
+    .map((e) => ({
+      event: e,
+      when: isMultiDay(e) ? rangeLabel(e) : shortDay(startDay(e)),
+      daysAway: Math.round((startDay(e) - start) / DAY_MS),
+    }))
+}
+
+/**
  * Flat "what's coming up" list for the dashboard zone and ambient line — one
  * entry per event (not per day), so a four-day trip doesn't eat the whole zone.
  */

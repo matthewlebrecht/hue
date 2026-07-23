@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "sb": "supabase",
     "deploy:meals": "supabase functions deploy meal-ideas",
-    "deploy:calendar": "supabase functions deploy calendar-sync"
+    "deploy:calendar": "supabase functions deploy calendar-sync",
+    "deploy:briefing": "supabase functions deploy morning-briefing"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.58.0",

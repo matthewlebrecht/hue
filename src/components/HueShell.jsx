@@ -6,7 +6,8 @@ import Dashboard from './Dashboard.jsx'
 import MoneyScreen from './MoneyScreen.jsx'
 import KitchenScreen from './KitchenScreen.jsx'
 import TodayScreen from './TodayScreen.jsx'
-import PlaceholderScreen from './PlaceholderScreen.jsx'
+import UpcomingScreen from './UpcomingScreen.jsx'
+import BriefingScreen from './BriefingScreen.jsx'
 import { supabase } from '../lib/supabase.js'
 
 /** Back to ambient after this long untouched — kitchen iPad settles itself. */
@@ -46,23 +47,10 @@ function renderDetail(view) {
       return <TodayScreen />
     case 'kitchen':
       return <KitchenScreen />
-    case 'packages':
-      return (
-        <PlaceholderScreen title="Packages" phase="v3">
-          Deliveries parsed out of Gmail — carrier, status, ETA — surfacing as a quiet
-          "arriving today" line on the ambient screen. Needs the Gmail pipe scoped to a
-          label, never the whole inbox.
-        </PlaceholderScreen>
-      )
+    case 'upcoming':
+      return <UpcomingScreen />
     case 'briefing':
-      return (
-        <PlaceholderScreen title="Morning briefing" phase="v3">
-          One paragraph each morning: today's schedule, weather, budget status, what's low in
-          the kitchen, bills due. It's a Claude API call over data HUE already holds — so it
-          wants the calendar and kitchen feeds live first, or it'd be a paragraph about
-          nothing.
-        </PlaceholderScreen>
-      )
+      return <BriefingScreen />
     default:
       return null
   }

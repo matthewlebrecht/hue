@@ -77,6 +77,19 @@
   font-size: 12px;
   color: var(--text-faint);
 }
+.briefing {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text);
+}
+.zone__briefing {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+.event__when--wide {
+  width: 108px;
+}
 .zone__hint {
   color: var(--amber);
   margin-top: 8px;
