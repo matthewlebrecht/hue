@@ -30,10 +30,10 @@ export default function AmbientScreen({ onWake }) {
   const hint = advice(weather)
   // the ambient screen only nags about the commute when it's actually relevant,
   // and prefers the train that hits someone's arrival target over the next one
-  const planned = plans.find((p) => p.plan.actionable && !p.plan.missed)
-  const commute = inCommuteWindow()
-    ? (planned?.plan.actionable ?? connections[0] ?? null)
-    : null
+  // Ambient stays quiet about tomorrow — a leave-by pill at 9pm is noise on a
+  // screen whose whole job is being calm.
+  const planned = plans.find((p) => p.plan.day === 'today' && p.plan.actionable)
+  const commute = inCommuteWindow() ? (planned?.plan.actionable ?? null) : null
 
   return (
     <button className="ambient" onClick={onWake} aria-label="Open dashboard">

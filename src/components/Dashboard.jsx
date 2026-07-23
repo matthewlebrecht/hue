@@ -28,10 +28,12 @@ export default function Dashboard({ onOpen, onRest }) {
   const { weather } = useWeather()
   const { connections, plans } = useCommute()
 
-  // an arrival target beats "next train from now" — that's the whole point of it
-  const firstPlan = plans.find((p) => p.plan.actionable && !p.plan.missed)
-  const commute = firstPlan?.plan.actionable ?? connections[0] ?? null
+  // an arrival target beats "next train from now" — that's the whole point of it.
+  // plans is already empty on weekends, so the zone falls back to raw departures.
+  const firstPlan = plans.find((p) => p.plan.actionable)
+  const commute = firstPlan?.plan.actionable ?? null
   const commuteRider = firstPlan?.rider ?? null
+  const commuteTomorrow = firstPlan?.plan.day === 'tomorrow'
   const agenda = upcoming(events, 3)
   const horizon = horizonSummary(sources, 3)
   const hint = advice(weather)
@@ -136,6 +138,7 @@ export default function Dashboard({ onOpen, onRest }) {
           {commute ? (
             <>
               <div className="zone__line zone__line--lead">
+                {commuteTomorrow && <span className="zone__tag">Tomorrow</span>}
                 Leave by {clock(commute.leaveBy)}
               </div>
               <div className="zone__line zone__sub">
@@ -148,7 +151,7 @@ export default function Dashboard({ onOpen, onRest }) {
               </div>
             </>
           ) : (
-            <Waiting>No connections right now</Waiting>
+            <Waiting>No commute today</Waiting>
           )}
         </Zone>
 

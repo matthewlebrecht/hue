@@ -133,7 +133,9 @@ export default function CommuteScreen() {
 function RiderPlan({ rider, plan }) {
   const destination = DESTINATIONS.find((d) => d.value === rider.destination)?.label
   const target = plan.recommended
-  const late = plan.missed
+  const tomorrow = plan.day === 'tomorrow'
+  // Tomorrow's plan can't be "missed" — nothing has departed yet.
+  const late = !tomorrow && plan.missed
 
   if (!target) {
     return (
@@ -151,6 +153,7 @@ function RiderPlan({ rider, plan }) {
     <div style={{ marginBottom: 26 }}>
       <div className="section-head" style={{ marginTop: 0 }}>
         <div className="section-label" style={{ margin: 0 }}>
+          {tomorrow ? 'Tomorrow · ' : ''}
           {rider.name} → {destination} by {clock(plan.target)}
         </div>
       </div>
@@ -170,16 +173,21 @@ function RiderPlan({ rider, plan }) {
           <div className="leaveby__label">Leave by</div>
           <div
             className="leaveby__time"
-            style={{ color: showing.minutesUntilLeave <= 5 ? 'var(--rose)' : 'var(--amber)' }}
+            style={{
+              color:
+                !tomorrow && showing.minutesUntilLeave <= 5 ? 'var(--rose)' : 'var(--amber)',
+            }}
           >
             {clock(showing.leaveBy)}
           </div>
           <div className="leaveby__sub">
-            {showing.minutesUntilLeave <= 0
-              ? 'Go now'
-              : `in ${showing.minutesUntilLeave} min · arrives ${clock(
-                  arrivalAt(showing, rider.destination)
-                )}`}
+            {tomorrow
+              ? `tomorrow morning · arrives ${clock(arrivalAt(showing, rider.destination))}`
+              : showing.minutesUntilLeave <= 0
+                ? 'Go now'
+                : `in ${showing.minutesUntilLeave} min · arrives ${clock(
+                    arrivalAt(showing, rider.destination)
+                  )}`}
           </div>
         </div>
       )}

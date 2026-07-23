@@ -174,10 +174,13 @@ export function applyLive(connection, updates) {
   }
 }
 
-/** Every connection for the day, regardless of the current time. */
-export function allConnections(now, data) {
-  return nextConnections(new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0), data, 200)
+/** Every connection running on a given service date, ignoring the clock. */
+export function connectionsOn(date, data) {
+  const midnight = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0)
+  return nextConnections(midnight, data, 500)
 }
+
+export const isWeekday = (d) => d.getDay() !== 0 && d.getDay() !== 6
 
 export const arrivalAt = (connection, destination) =>
   destination === 'city_center' ? (connection.cityCenter ?? connection.gallivan) : connection.gallivan
@@ -195,11 +198,18 @@ export function parseHm(hm) {
  * the useful answer is the LATEST connection that still gets you there on time,
  * plus the one before it as insurance.
  */
-export function arrivalPlan(now, data, { arriveBy, destination }) {
+export function arrivalPlan(date, data, { arriveBy, destination, now = null }) {
   const target = parseHm(arriveBy)
-  const nowS = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()
 
-  const onTime = allConnections(now, data).filter((c) => {
+  // Planning a future day: nothing has "already gone", so the clock is ignored.
+  const sameDay =
+    now &&
+    now.getFullYear() === date.getFullYear() &&
+    now.getMonth() === date.getMonth() &&
+    now.getDate() === date.getDate()
+  const nowS = sameDay ? now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds() : -Infinity
+
+  const onTime = connectionsOn(date, data).filter((c) => {
     const arrival = arrivalAt(c, destination)
     return arrival != null && arrival <= target
   })
@@ -211,7 +221,9 @@ export function arrivalPlan(now, data, { arriveBy, destination }) {
   const backup = onTime[onTime.length - 2] ?? null
 
   // Still catchable? The walk has to fit before the train leaves.
-  const catchable = onTime.filter((c) => c.slineDepart >= nowS + WALK_MIN * 60)
+  const catchable = onTime.filter(
+    (c) => nowS === -Infinity || c.slineDepart >= nowS + WALK_MIN * 60
+  )
 
   // The LAST still-catchable option, not the first. Taking the first would put
   // you at your desk an hour early every morning — the whole point of an arrival
@@ -227,6 +239,27 @@ export function arrivalPlan(now, data, { arriveBy, destination }) {
     actionable,
     slack: recommended ? target - arrivalAt(recommended, destination) : null,
   }
+}
+
+/**
+ * Which commute the headline should show.
+ *
+ * Once today's last on-time train has gone, the useful thing to see is
+ * tomorrow's — but only if tomorrow is a workday. That means Friday evening
+ * shows nothing (tomorrow is Saturday), Saturday shows nothing, and Sunday
+ * evening shows Monday, which is exactly when you'd want it.
+ */
+export function commutePlan(now, data, { arriveBy, destination }) {
+  if (isWeekday(now)) {
+    const today = arrivalPlan(now, data, { arriveBy, destination, now })
+    if (today.recommended && !today.missed) return { ...today, day: 'today' }
+  }
+
+  const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+  if (!isWeekday(tomorrow)) return null
+
+  const plan = arrivalPlan(tomorrow, data, { arriveBy, destination })
+  return plan.recommended ? { ...plan, day: 'tomorrow', date: tomorrow } : null
 }
 
 /** Seconds-after-midnight -> "7:44 AM". Handles values past 24h. */

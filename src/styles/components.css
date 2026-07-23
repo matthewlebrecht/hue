@@ -197,6 +197,17 @@
 .zone__line--urgent {
   color: var(--amber);
 }
+.zone__tag {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 2px 8px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
 .event__badge {
   margin-right: 6px;
 }

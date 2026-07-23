@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { fetchTransit, nextConnections, arrivalPlan, applyLive } from '../lib/commute.js'
+import { fetchTransit, nextConnections, commutePlan, applyLive } from '../lib/commute.js'
 import { getSetting, setSetting, DEFAULT_COMMUTE } from '../lib/settings.js'
 import { supabase } from '../lib/supabase.js'
 
@@ -67,21 +67,29 @@ export function useCommute() {
 
   const riders = (config?.riders ?? []).filter((r) => r.enabled)
   const plans = data
-    ? riders.map((rider) => {
-        const plan = arrivalPlan(now, data, {
-          arriveBy: rider.arrive_by,
-          destination: rider.destination,
+    ? riders
+        .map((rider) => {
+          const plan = commutePlan(now, data, {
+            arriveBy: rider.arrive_by,
+            destination: rider.destination,
+          })
+          if (!plan) return null // weekend, or nothing runs — show no headline
+          return {
+            rider,
+            plan: {
+              ...plan,
+              // Live delays only apply to today; tomorrow's feed doesn't exist yet.
+              recommended:
+                plan.recommended &&
+                (plan.day === 'today' ? applyLive(plan.recommended, live?.updates) : plan.recommended),
+              actionable:
+                plan.actionable &&
+                (plan.day === 'today' ? applyLive(plan.actionable, live?.updates) : plan.actionable),
+              backup: plan.backup,
+            },
+          }
         })
-        return {
-          rider,
-          plan: {
-            ...plan,
-            recommended: plan.recommended && applyLive(plan.recommended, live?.updates),
-            actionable: plan.actionable && applyLive(plan.actionable, live?.updates),
-            backup: plan.backup && applyLive(plan.backup, live?.updates),
-          },
-        }
-      })
+        .filter(Boolean)
     : []
 
   const saveConfig = async (next) => {
