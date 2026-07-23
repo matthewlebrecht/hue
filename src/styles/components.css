@@ -151,6 +151,9 @@
 .leg__time--ok {
   color: var(--green);
 }
+.leg__time--bad {
+  color: var(--rose);
+}
 .leg__title {
   font-size: 15px;
   margin-bottom: 3px;

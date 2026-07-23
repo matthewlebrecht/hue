@@ -117,6 +117,8 @@ export function nextConnections(now, { trips, services, exceptions }, count = 3)
 
     results.push({
       leaveBy: s.depart_s - (WALK_MIN + BUFFER_MIN) * 60,
+      slineTripId: s.trip_id,
+      traxTripId: connection.trip_id,
       slineDepart: s.depart_s,
       centralPointe: s.arrive_s,
       wait: connection.depart_s - s.arrive_s,
@@ -130,6 +132,46 @@ export function nextConnections(now, { trips, services, exceptions }, count = 3)
     if (results.length >= count) break
   }
   return results
+}
+
+/**
+ * Fold live delays into a connection.
+ *
+ * The important part is re-checking the transfer. A six-minute S-Line delay with
+ * a three-minute connection doesn't make you six minutes late — it makes you
+ * fifteen late, because you watch the TRAX leave. That's the failure the whole
+ * two-train design exists to catch, so a broken connection is surfaced as
+ * broken rather than quietly re-timed.
+ */
+export function applyLive(connection, updates) {
+  if (!updates) return connection
+
+  const slineDelay = updates[connection.slineTripId]?.['23567']?.delay ?? 0
+  const slineArrDelay = updates[connection.slineTripId]?.['23565']?.delay ?? slineDelay
+  const traxDelay = updates[connection.traxTripId]?.['18413']?.delay ?? 0
+
+  if (!slineDelay && !slineArrDelay && !traxDelay) return { ...connection, live: false }
+
+  const slineDepart = connection.slineDepart + slineDelay
+  const centralPointe = connection.centralPointe + slineArrDelay
+  const traxDepart = connection.traxDepart + traxDelay
+  const wait = traxDepart - centralPointe
+
+  return {
+    ...connection,
+    live: true,
+    slineDelay,
+    traxDelay,
+    slineDepart,
+    centralPointe,
+    traxDepart,
+    wait,
+    gallivan: connection.gallivan + traxDelay,
+    cityCenter: connection.cityCenter == null ? null : connection.cityCenter + traxDelay,
+    leaveBy: slineDepart - (WALK_MIN + BUFFER_MIN) * 60,
+    // Below the platform-change minimum the connection no longer holds.
+    broken: wait < TRANSFER_MIN * 60,
+  }
 }
 
 /** Every connection for the day, regardless of the current time. */

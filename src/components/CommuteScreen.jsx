@@ -15,7 +15,8 @@ const DESTINATIONS = [
  * decision.
  */
 export default function CommuteScreen() {
-  const { plans, connections, config, saveConfig, lastRefresh, loading, error } = useCommute()
+  const { plans, connections, config, saveConfig, live, lastRefresh, loading, error } =
+    useCommute()
   const [refreshing, setRefreshing] = useState(false)
   const [refreshError, setRefreshError] = useState(null)
   const [editing, setEditing] = useState(false)
@@ -89,10 +90,32 @@ export default function CommuteScreen() {
         </>
       )}
 
+      {live?.alerts?.length > 0 && (
+        <>
+          <div className="section-label" style={{ marginTop: 28 }}>
+            Service alerts
+          </div>
+          {live.alerts.slice(0, 3).map((a) => (
+            <div className="card" key={a.header} style={{ marginBottom: 8 }}>
+              <div style={{ fontSize: 14, color: 'var(--amber)' }}>{a.header}</div>
+              {a.description && (
+                <div style={{ fontSize: 13, color: 'var(--text-faint)', marginTop: 6 }}>
+                  {a.description}
+                </div>
+              )}
+            </div>
+          ))}
+        </>
+      )}
+
       {lastRefresh && (
         <div className="field__hint" style={{ textAlign: 'center', marginTop: 20 }}>
-          Timetable from {new Date(lastRefresh).toLocaleDateString()} · scheduled times only,
-          live delays not wired yet
+          Timetable from {new Date(lastRefresh).toLocaleDateString()} ·{' '}
+          {live?.configured
+            ? live.error
+              ? `live feed error: ${live.error}`
+              : `live · ${live.trips ?? 0} trips updated`
+            : 'scheduled times (no realtime key set)'}
         </div>
       )}
 
@@ -166,20 +189,33 @@ function RiderPlan({ rider, plan }) {
           <Leg
             time={clock(showing.slineDepart)}
             title="S-Line from 300 East"
-            meta={`Central Pointe ${clock(showing.centralPointe)}`}
+            meta={
+              showing.slineDelay
+                ? `${delayText(showing.slineDelay)} · Central Pointe ${clock(showing.centralPointe)}`
+                : `Central Pointe ${clock(showing.centralPointe)}`
+            }
+            tone={showing.slineDelay > 0 ? 'warn' : undefined}
           />
           <Leg
             time={`${Math.round(showing.wait / 60)} min`}
             title="Transfer at Central Pointe"
             meta={
-              showing.wait / 60 < TRANSFER_MIN + 1 ? 'Tight connection' : 'Comfortable connection'
+              showing.broken
+                ? "Won't make it — take the next one"
+                : showing.wait / 60 < TRANSFER_MIN + 1
+                  ? 'Tight connection'
+                  : 'Comfortable connection'
             }
-            tone={showing.wait / 60 < TRANSFER_MIN + 1 ? 'warn' : 'ok'}
+            tone={showing.broken ? 'bad' : showing.wait / 60 < TRANSFER_MIN + 1 ? 'warn' : 'ok'}
           />
           <Leg
             time={clock(showing.traxDepart)}
             title={`${showing.traxName} Line`}
-            meta={`${destination} ${clock(arrivalAt(showing, rider.destination))}`}
+            meta={
+              (showing.traxDelay ? `${delayText(showing.traxDelay)} · ` : '') +
+              `${destination} ${clock(arrivalAt(showing, rider.destination))}`
+            }
+            tone={showing.traxDelay > 0 ? 'warn' : undefined}
           />
         </div>
       )}
@@ -193,6 +229,13 @@ function RiderPlan({ rider, plan }) {
       )}
     </div>
   )
+}
+
+/** "running 6 late" / "4 early" — minutes, in the words a person would use. */
+function delayText(seconds) {
+  const min = Math.round(Math.abs(seconds) / 60)
+  if (min === 0) return 'on time'
+  return seconds > 0 ? `running ${min} late` : `${min} early`
 }
 
 function Leg({ time, title, meta, tone }) {
