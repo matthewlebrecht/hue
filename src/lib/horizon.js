@@ -77,7 +77,11 @@ export function horizonSummary(events, packages, limit = 3) {
   const picked = all.slice(0, limit)
 
   const nextTrip = all.find((i) => i.spanning)
-  if (nextTrip && !picked.includes(nextTrip)) picked[picked.length - 1] = nextTrip
+  if (nextTrip && !picked.includes(nextTrip)) {
+    // with an empty list there's no slot to give up — just add it
+    if (picked.length === 0) picked.push(nextTrip)
+    else picked[picked.length - 1] = nextTrip
+  }
 
   return picked
 }

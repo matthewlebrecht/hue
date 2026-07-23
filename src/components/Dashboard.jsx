@@ -21,14 +21,15 @@ export default function Dashboard({ onOpen, onRest }) {
   const { time, meridiem, date } = timeParts(now)
   const { status, goals, spend } = useMoney()
   const { events } = useSchedule({ limit: 60 })
+  const { lowOrOut } = useInventory()
+  const { packages } = usePackages()
+  const { weather } = useWeather()
+
   const agenda = upcoming(events, 3)
   const horizon = horizonSummary(events, packages, 3)
-  const { weather } = useWeather()
   const hint = advice(weather)
   // read-only: the dashboard shows today's briefing if one exists, never writes one
   const briefing = cachedBriefing()
-  const { lowOrOut } = useInventory()
-  const { packages } = usePackages()
   // read-only: the headline is whatever the Kitchen screen last generated, so the
   // dashboard never triggers a paid call of its own
   const meals = cachedIdeas()
