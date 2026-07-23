@@ -93,6 +93,65 @@
   color: var(--rose);
 }
 
+/* ---------- departure board rows ---------- */
+.departure {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--hairline);
+}
+.departure:last-child {
+  border-bottom: none;
+}
+.departure__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+}
+.departure__count {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  color: var(--accent);
+}
+.departure__count--urgent {
+  color: var(--rose);
+}
+.departure__mins {
+  font-size: 30px;
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.departure__unit {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.departure__take {
+  font-size: 15px;
+  color: var(--text);
+  white-space: nowrap;
+}
+.departure__stops {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+.departure__stop-name {
+  color: var(--text-faint);
+}
+.departure__note {
+  font-size: 12px;
+  color: var(--amber);
+  margin-top: 8px;
+}
+.departure__note--warn {
+  color: var(--rose);
+}
+
 .board-label {
   font-size: 13px;
   color: var(--accent);

@@ -20,7 +20,8 @@ import {
  * the right trade for a screen used with wet hands mid-unpacking.
  */
 export default function KitchenScreen() {
-  const { items, lowOrOut, loading, error, applyLocal, refresh, setError } = useInventory()
+  const { items, lowOrOut, loading, error, applyLocal, refresh, resort, setError } =
+    useInventory()
   const [editing, setEditing] = useState(null)
   const [adding, setAdding] = useState(false)
   const [restocking, setRestocking] = useState(false)
@@ -43,6 +44,7 @@ export default function KitchenScreen() {
     try {
       await restockAll()
       await refresh()
+      resort() // everything just became ok — a re-sort here is expected, not jarring
     } catch (e) {
       setError(e.message ?? String(e))
     } finally {

@@ -15,8 +15,13 @@ const DESTINATIONS = [
  * decision.
  */
 export default function CommuteScreen() {
-  const { plans, connections, outbound, config, saveConfig, live, lastRefresh, loading, error } =
+  const { plans, connections, outbound, config, saveConfig, live, lastRefresh, loading, error, tick } =
     useCommute()
+
+  // recomputed on the hook's 30s tick so the countdowns actually count down
+  const now = new Date()
+  const nowS = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()
+  void tick
   const [refreshing, setRefreshing] = useState(false)
   const [refreshError, setRefreshError] = useState(null)
   const [editing, setEditing] = useState(false)
@@ -75,22 +80,19 @@ export default function CommuteScreen() {
               <div className="board-label">Towards downtown</div>
               <div className="txn-group" style={{ marginBottom: 16 }}>
                 {connections.map((c) => (
-                  <div key={`in-${c.slineDepart}`} className="event">
-                    {/* the time you stand on the platform, not the leave-by */}
-                    <div className="event__when">{clock(c.slineDepart)}</div>
-                    <div className="event__main">
-                      <div className="event__title">
-                        {c.traxName} connection at {clock(c.traxDepart)}
-                        {c.slineDelay ? ` · ${delayText(c.slineDelay)}` : ''}
-                      </div>
-                      <div className="event__meta">
-                        Gallivan {clock(c.gallivan)}
-                        {c.cityCenter ? ` · City Center ${clock(c.cityCenter)}` : ''} ·{' '}
-                        {Math.round(c.wait / 60)} min transfer
-                        {c.broken ? ' · connection missed' : ''}
-                      </div>
-                    </div>
-                  </div>
+                  <Departure
+                    key={`in-${c.slineDepart}`}
+                    departsAt={c.slineDepart}
+                    nowS={nowS}
+                    note={c.slineDelay ? delayText(c.slineDelay) : null}
+                    stops={[
+                      ['Central Pointe', c.centralPointe],
+                      [`${c.traxName} Line`, c.traxDepart],
+                      ['Gallivan Plaza', c.gallivan],
+                      ['City Center', c.cityCenter],
+                    ]}
+                    warn={c.broken ? 'Connection missed — take the next one' : null}
+                  />
                 ))}
               </div>
             </>
@@ -101,15 +103,15 @@ export default function CommuteScreen() {
               <div className="board-label">Towards Sugar House</div>
               <div className="txn-group">
                 {outbound.map((t) => (
-                  <div key={`out-${t.tripId}`} className="event">
-                    <div className="event__when">{clock(t.at300East)}</div>
-                    <div className="event__main">
-                      <div className="event__title">{t.headsign || 'To Fairmont'}</div>
-                      <div className="event__meta">
-                        From Central Pointe {clock(t.centralPointe)}
-                      </div>
-                    </div>
-                  </div>
+                  <Departure
+                    key={`out-${t.tripId}`}
+                    departsAt={t.at300East}
+                    nowS={nowS}
+                    stops={[
+                      ['Sugarmont', t.sugarmont],
+                      ['Fairmont', t.fairmont],
+                    ]}
+                  />
                 ))}
               </div>
             </>
@@ -262,6 +264,41 @@ function RiderPlan({ rider, plan }) {
           {BUFFER_MIN} min buffer is already included.
         </div>
       )}
+    </div>
+  )
+}
+
+/**
+ * One row of the board: how long you've got, which train that is, and where it
+ * puts you. The countdown leads because "13 min" is the thing you act on —
+ * a clock time makes you do the subtraction yourself.
+ */
+function Departure({ departsAt, nowS, stops, note, warn }) {
+  const mins = Math.round((departsAt - nowS) / 60)
+  const urgent = mins <= 5
+
+  return (
+    <div className="departure">
+      <div className="departure__head">
+        <div className={`departure__count ${urgent ? 'departure__count--urgent' : ''}`}>
+          <span className="departure__mins">{mins <= 0 ? 'now' : mins}</span>
+          {mins > 0 && <span className="departure__unit">min</span>}
+        </div>
+        <div className="departure__take">Take train at {clock(departsAt)}</div>
+      </div>
+
+      <div className="departure__stops">
+        {stops
+          .filter(([, time]) => time != null)
+          .map(([name, time]) => (
+            <span key={name} className="departure__stop">
+              <span className="departure__stop-name">{name}</span> {clock(time)}
+            </span>
+          ))}
+      </div>
+
+      {note && <div className="departure__note">{note}</div>}
+      {warn && <div className="departure__note departure__note--warn">{warn}</div>}
     </div>
   )
 }

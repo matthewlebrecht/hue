@@ -288,8 +288,9 @@ export function outboundDepartures(now, data, count = 3) {
       out.push({
         tripId: t.trip_id,
         headsign: t.headsign,
-        centralPointe: t.depart_s + shift,
-        at300East: t.arrive_s + shift,
+        at300East: t.depart_s + shift,
+        sugarmont: t.arrive_s == null ? null : t.arrive_s + shift,
+        fairmont: t.arrive_alt_s == null ? null : t.arrive_alt_s + shift,
       })
     }
   }
