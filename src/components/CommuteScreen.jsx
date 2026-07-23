@@ -5,8 +5,10 @@ import { clock, arrivalAt, WALK_MIN, BUFFER_MIN, TRANSFER_MIN } from '../lib/com
 import { DEFAULT_COMMUTE } from '../lib/settings.js'
 
 const DESTINATIONS = [
-  { value: 'gallivan', label: 'Gallivan Plaza' },
-  { value: 'city_center', label: 'City Center' },
+  { value: 'gallivan', label: 'Gallivan Plaza', group: 'Downtown' },
+  { value: 'city_center', label: 'City Center', group: 'Downtown' },
+  { value: 'sugarmont', label: 'Sugarmont', group: 'Sugar House' },
+  { value: 'fairmont', label: 'Fairmont', group: 'Sugar House' },
 ]
 
 /**
@@ -221,7 +223,19 @@ function RiderPlan({ rider, plan }) {
         </div>
       )}
 
-      {showing && (
+      {showing && showing.direct && (
+        <div className="card legs">
+          <Leg
+            time={clock(showing.slineDepart)}
+            title="S-Line from 300 East"
+            meta={`${showing.headsign || 'Eastbound'} · ${destination} ${clock(
+              arrivalAt(showing, rider.destination)
+            )}`}
+          />
+        </div>
+      )}
+
+      {showing && !showing.direct && (
         <div className="card legs">
           <Leg
             time={clock(showing.slineDepart)}
@@ -364,18 +378,28 @@ function ArrivalSheet({ config, onSave, onClose }) {
               <>
                 <div className="field" style={{ marginTop: 10 }}>
                   <span className="field__label">Gets off at</span>
-                  <div className="seg">
-                    {DESTINATIONS.map((d) => (
-                      <button
-                        key={d.value}
-                        type="button"
-                        className={`seg__opt ${r.destination === d.value ? 'seg__opt--on' : ''}`}
-                        onClick={() => update(r.id, { destination: d.value })}
-                      >
-                        {d.label}
-                      </button>
-                    ))}
-                  </div>
+                  {['Downtown', 'Sugar House'].map((group) => (
+                    <div key={group} style={{ marginBottom: 8 }}>
+                      <div className="field__hint" style={{ margin: '0 0 6px' }}>
+                        {group}
+                        {group === 'Sugar House' ? ' — direct, no transfer' : ' — via Central Pointe'}
+                      </div>
+                      <div className="seg">
+                        {DESTINATIONS.filter((d) => d.group === group).map((d) => (
+                          <button
+                            key={d.value}
+                            type="button"
+                            className={`seg__opt ${
+                              r.destination === d.value ? 'seg__opt--on' : ''
+                            }`}
+                            onClick={() => update(r.id, { destination: d.value })}
+                          >
+                            {d.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
                 <div className="field">
                   <label className="field__label" htmlFor={`arr-${r.id}`}>

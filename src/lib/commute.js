@@ -182,8 +182,58 @@ export function connectionsOn(date, data) {
 
 export const isWeekday = (d) => d.getDay() !== 0 && d.getDay() !== 6
 
-export const arrivalAt = (connection, destination) =>
-  destination === 'city_center' ? (connection.cityCenter ?? connection.gallivan) : connection.gallivan
+/** Downtown means a transfer; Sugar House is one train straight through. */
+export const isDowntown = (destination) =>
+  destination === 'gallivan' || destination === 'city_center'
+
+export function arrivalAt(connection, destination) {
+  switch (destination) {
+    case 'city_center':
+      return connection.cityCenter ?? connection.gallivan
+    case 'sugarmont':
+      return connection.sugarmont
+    case 'fairmont':
+      return connection.fairmont ?? connection.sugarmont
+    default:
+      return connection.gallivan
+  }
+}
+
+/**
+ * Sugar House trips as connection-shaped objects.
+ *
+ * No transfer to protect, so there's no wait, no TRAX leg, and nothing that can
+ * break — `direct` tells the UI to render one leg instead of three rather than
+ * having it infer that from missing fields.
+ */
+export function outboundConnections(date, data) {
+  const services = activeServices(date, data.services, data.exceptions)
+  const yesterday = new Date(date.getTime() - 86400000)
+  const yesterdayServices = activeServices(yesterday, data.services, data.exceptions)
+
+  const out = []
+  for (const offset of [0, -1]) {
+    for (const t of data.trips) {
+      if (t.leg !== 'sline_out') continue
+      const runs =
+        offset === 0
+          ? services.has(t.service_id)
+          : yesterdayServices.has(t.service_id) && t.depart_s >= 86400
+      if (!runs) continue
+      const shift = offset === -1 ? -86400 : 0
+      out.push({
+        direct: true,
+        slineTripId: t.trip_id,
+        headsign: t.headsign,
+        slineDepart: t.depart_s + shift,
+        sugarmont: t.arrive_s == null ? null : t.arrive_s + shift,
+        fairmont: t.arrive_alt_s == null ? null : t.arrive_alt_s + shift,
+        leaveBy: t.depart_s + shift - (WALK_MIN + BUFFER_MIN) * 60,
+      })
+    }
+  }
+  return out.sort((a, b) => a.slineDepart - b.slineDepart)
+}
 
 /** "08:00" -> seconds after midnight */
 export function parseHm(hm) {
@@ -209,7 +259,11 @@ export function arrivalPlan(date, data, { arriveBy, destination, now = null }) {
     now.getDate() === date.getDate()
   const nowS = sameDay ? now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds() : -Infinity
 
-  const onTime = connectionsOn(date, data).filter((c) => {
+  const candidates = isDowntown(destination)
+    ? connectionsOn(date, data)
+    : outboundConnections(date, data)
+
+  const onTime = candidates.filter((c) => {
     const arrival = arrivalAt(c, destination)
     return arrival != null && arrival <= target
   })
@@ -230,13 +284,30 @@ export function arrivalPlan(date, data, { arriveBy, destination, now = null }) {
   // target is to leave as late as you safely can.
   const actionable = catchable.length > 0 ? catchable[catchable.length - 1] : null
 
+  /**
+   * Always recompute the countdown against the real clock.
+   *
+   * The candidate lists are built for a whole service DAY, so any countdown
+   * baked in there is measured from midnight — which read as "in 448 min" on a
+   * 7:32 train. Tomorrow's plan has no meaningful countdown, so it's dropped
+   * rather than faked.
+   */
+  const withCountdown = (c) => {
+    if (!c) return c
+    if (nowS === -Infinity) {
+      const { minutesUntilLeave: _drop, ...rest } = c
+      return rest
+    }
+    return { ...c, minutesUntilLeave: Math.round((c.leaveBy - nowS) / 60) }
+  }
+
   return {
     target,
-    recommended,
-    backup,
+    recommended: withCountdown(recommended),
+    backup: withCountdown(backup),
     // Every on-time option has gone — you're arriving late whatever you do.
     missed: catchable.length === 0,
-    actionable,
+    actionable: withCountdown(actionable),
     slack: recommended ? target - arrivalAt(recommended, destination) : null,
   }
 }
