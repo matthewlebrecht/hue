@@ -34,6 +34,52 @@
 .ambient__row {
   margin-top: 26px;
   min-height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: clamp(15px, 2.6vw, 22px);
+  color: var(--text-dim);
+}
+.ambient__wx {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.ambient__wx-icon {
+  font-size: 1.1em;
+  line-height: 1;
+}
+.ambient__place {
+  color: var(--text-faint);
+  font-size: 0.8em;
+}
+.ambient__sep {
+  color: var(--text-faint);
+}
+.ambient__hint {
+  margin-top: 10px;
+  font-size: clamp(12px, 1.8vw, 15px);
+  color: var(--amber);
+}
+
+.dash__wx {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 16px;
+  color: var(--text-dim);
+  margin-right: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.dash__wx-range {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.zone__hint {
+  color: var(--amber);
+  margin-top: 8px;
 }
 .ambient__next {
   margin-top: 22px;

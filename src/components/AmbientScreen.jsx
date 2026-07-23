@@ -3,6 +3,8 @@ import { useSchedule } from '../hooks/useSchedule.js'
 import { upcoming, timeLabel, shortDay, startDay } from '../lib/schedule.js'
 import { useInventory } from '../hooks/useInventory.js'
 import { useMoney } from '../state/MoneyContext.jsx'
+import { useWeather } from '../hooks/useWeather.js'
+import { describe, advice, PLACE } from '../lib/weather.js'
 
 /**
  * Level 1 — resting state. Glanceable from across the kitchen.
@@ -19,6 +21,8 @@ export default function AmbientScreen({ onWake }) {
   const { events } = useSchedule({ limit: 20 })
   const next = upcoming(events, 1)[0] ?? null
   const { lowOrOut } = useInventory()
+  const { weather } = useWeather()
+  const hint = advice(weather)
 
   return (
     <button className="ambient" onClick={onWake} aria-label="Open dashboard">
@@ -29,6 +33,16 @@ export default function AmbientScreen({ onWake }) {
       <div className="ambient__date">{date}</div>
 
       <div className="ambient__row">
+        {weather && (
+          <>
+            <span className="ambient__wx">
+              <span className="ambient__wx-icon">{describe(weather.code, weather.isDay).icon}</span>
+              {weather.temp}°
+            </span>
+            <span className="ambient__place">{PLACE}</span>
+            <span className="ambient__sep">·</span>
+          </>
+        )}
         {!loading && <span className={`dot dot--${status.tone}`} />}
       </div>
 
@@ -45,6 +59,9 @@ export default function AmbientScreen({ onWake }) {
           {lowOrOut.length > 0 && `${lowOrOut.length} to pick up`}
         </div>
       )}
+
+      {/* the "bring a jacket" line — absent unless the weather warrants it */}
+      {hint && <div className="ambient__hint">{hint}</div>}
     </button>
   )
 }

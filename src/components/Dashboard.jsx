@@ -1,6 +1,8 @@
 import { useClock, timeParts } from '../hooks/useClock.js'
 import { useSchedule } from '../hooks/useSchedule.js'
 import { upcoming, timeLabel, shortDay, startDay } from '../lib/schedule.js'
+import { useWeather } from '../hooks/useWeather.js'
+import { describe, advice } from '../lib/weather.js'
 import { useInventory } from '../hooks/useInventory.js'
 import { cachedIdeas } from '../lib/meals.js'
 import { sentenceCase } from '../lib/text.js'
@@ -17,6 +19,8 @@ export default function Dashboard({ onOpen, onRest }) {
   const { status, goals, spend } = useMoney()
   const { events } = useSchedule({ limit: 60 })
   const agenda = upcoming(events, 3)
+  const { weather } = useWeather()
+  const hint = advice(weather)
   const { lowOrOut } = useInventory()
   // read-only: the headline is whatever the Kitchen screen last generated, so the
   // dashboard never triggers a paid call of its own
@@ -33,6 +37,14 @@ export default function Dashboard({ onOpen, onRest }) {
           HUE
         </button>
         <div className="dash__clock">
+          {weather && (
+            <span className="dash__wx" title={describe(weather.code, weather.isDay).label}>
+              {describe(weather.code, weather.isDay).icon} {weather.temp}°
+              <span className="dash__wx-range">
+                {weather.high}°/{weather.low}°
+              </span>
+            </span>
+          )}
           {time}
           <span className="dash__meridiem">{meridiem}</span>
           <span className="dash__date">{date}</span>
@@ -57,6 +69,7 @@ export default function Dashboard({ onOpen, onRest }) {
               </div>
             ))
           )}
+          {hint && <div className="zone__line zone__sub zone__hint">{hint}</div>}
         </Zone>
 
         <Zone
