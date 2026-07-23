@@ -8,6 +8,7 @@ import KitchenScreen from './KitchenScreen.jsx'
 import TodayScreen from './TodayScreen.jsx'
 import UpcomingScreen from './UpcomingScreen.jsx'
 import BriefingScreen from './BriefingScreen.jsx'
+import CommuteScreen from './CommuteScreen.jsx'
 import { supabase } from '../lib/supabase.js'
 
 /** Back to ambient after this long untouched — kitchen iPad settles itself. */
@@ -51,6 +52,8 @@ function renderDetail(view) {
       return <UpcomingScreen />
     case 'briefing':
       return <BriefingScreen />
+    case 'commute':
+      return <CommuteScreen />
     default:
       return null
   }

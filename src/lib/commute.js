@@ -1,0 +1,151 @@
+import { supabase } from './supabase.js'
+
+/**
+ * Commute: 300 East (S-Line) -> Central Pointe -> Blue/Green -> downtown.
+ *
+ * The whole point is that this is a TWO-train trip. An S-Line delay doesn't just
+ * make you late, it can blow the transfer entirely — so the leave-by time is
+ * computed from a connection that actually holds, not from each train alone.
+ */
+
+/** Door to the 300 East platform. */
+export const WALK_MIN = Number(import.meta.env.VITE_COMMUTE_WALK_MIN ?? 2)
+/** Slack so you're not running for it. */
+export const BUFFER_MIN = Number(import.meta.env.VITE_COMMUTE_BUFFER_MIN ?? 2)
+/** Platform-to-platform at Central Pointe. Below this the connection isn't real. */
+export const TRANSFER_MIN = Number(import.meta.env.VITE_COMMUTE_TRANSFER_MIN ?? 3)
+/**
+ * Longest wait at Central Pointe still worth calling a connection. Without this,
+ * the last S-Line of the night "connects" to the first TRAX of the morning —
+ * technically true, six hours on a platform, useless as a nudge.
+ */
+export const MAX_WAIT_MIN = Number(import.meta.env.VITE_COMMUTE_MAX_WAIT_MIN ?? 45)
+
+const DAY_COLS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+
+export async function fetchTransit() {
+  const [tripsRes, servicesRes, exceptionsRes, metaRes] = await Promise.all([
+    supabase.from('transit_trip').select('*').order('depart_s'),
+    supabase.from('transit_service').select('*'),
+    supabase.from('transit_service_exception').select('*'),
+    supabase.from('transit_meta').select('*').eq('key', 'last_refresh').maybeSingle(),
+  ])
+  if (tripsRes.error) throw tripsRes.error
+
+  return {
+    trips: tripsRes.data ?? [],
+    services: servicesRes.data ?? [],
+    exceptions: exceptionsRes.data ?? [],
+    lastRefresh: metaRes.data?.value ?? null,
+  }
+}
+
+const ymd = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
+/**
+ * Which service patterns run on a given date. Exceptions win over the weekly
+ * pattern — that's how holidays work in GTFS, and a Christmas timetable silently
+ * ignored is exactly the morning you'd miss the train.
+ */
+export function activeServices(date, services, exceptions) {
+  const key = ymd(date)
+  const dayCol = DAY_COLS[date.getDay()]
+  const active = new Set()
+
+  for (const s of services) {
+    if (key < s.start_date || key > s.end_date) continue
+    if (s[dayCol]) active.add(s.service_id)
+  }
+  for (const e of exceptions) {
+    if (e.exception_date !== key) continue
+    if (e.added) active.add(e.service_id)
+    else active.delete(e.service_id)
+  }
+  return active
+}
+
+const secondsInto = (d) => d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds()
+
+/**
+ * Next connections that actually hold.
+ *
+ * GTFS times run past 24:00 for after-midnight service, so a 00:30 train is
+ * "yesterday's service at 24:30". Both service days are considered or the last
+ * trains of the night vanish from the board.
+ */
+export function nextConnections(now, { trips, services, exceptions }, count = 3) {
+  const todayServices = activeServices(now, services, exceptions)
+  const yesterday = new Date(now.getTime() - 86400000)
+  const yesterdayServices = activeServices(yesterday, services, exceptions)
+
+  const nowS = secondsInto(now)
+
+  const runsAt = (trip, offset) =>
+    offset === 0
+      ? todayServices.has(trip.service_id)
+      : yesterdayServices.has(trip.service_id) && trip.depart_s >= 86400
+
+  const legTrips = (leg) => {
+    const out = []
+    for (const offset of [0, -1]) {
+      for (const t of trips) {
+        if (t.leg !== leg || !runsAt(t, offset)) continue
+        // shift yesterday's after-midnight trips onto today's clock
+        const shift = offset === -1 ? -86400 : 0
+        out.push({ ...t, depart_s: t.depart_s + shift, arrive_s: t.arrive_s + shift,
+          arrive_alt_s: t.arrive_alt_s == null ? null : t.arrive_alt_s + shift })
+      }
+    }
+    return out.sort((a, b) => a.depart_s - b.depart_s)
+  }
+
+  const slines = legTrips('sline')
+  const traxs = legTrips('trax')
+
+  const results = []
+  for (const s of slines) {
+    // Only trains you could still physically catch.
+    if (s.depart_s < nowS + WALK_MIN * 60) continue
+
+    const connection = traxs.find(
+      (t) =>
+        t.depart_s >= s.arrive_s + TRANSFER_MIN * 60 &&
+        t.depart_s <= s.arrive_s + MAX_WAIT_MIN * 60
+    )
+    if (!connection) continue
+
+    results.push({
+      leaveBy: s.depart_s - (WALK_MIN + BUFFER_MIN) * 60,
+      slineDepart: s.depart_s,
+      centralPointe: s.arrive_s,
+      wait: connection.depart_s - s.arrive_s,
+      traxRoute: connection.route_short,
+      traxName: connection.route_short === '701' ? 'Blue' : 'Green',
+      traxDepart: connection.depart_s,
+      gallivan: connection.arrive_s,
+      cityCenter: connection.arrive_alt_s,
+      minutesUntilLeave: Math.round((s.depart_s - (WALK_MIN + BUFFER_MIN) * 60 - nowS) / 60),
+    })
+    if (results.length >= count) break
+  }
+  return results
+}
+
+/** Seconds-after-midnight -> "7:44 AM". Handles values past 24h. */
+export function clock(seconds) {
+  if (seconds == null) return null
+  const s = ((seconds % 86400) + 86400) % 86400
+  const h24 = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  const h = h24 % 12 === 0 ? 12 : h24 % 12
+  return `${h}:${String(m).padStart(2, '0')} ${h24 < 12 ? 'AM' : 'PM'}`
+}
+
+/** Weekday mornings — when the nudge is worth surfacing unprompted. */
+export function inCommuteWindow(now = new Date()) {
+  const day = now.getDay()
+  if (day === 0 || day === 6) return false
+  const h = now.getHours()
+  return h >= 6 && h < 10
+}

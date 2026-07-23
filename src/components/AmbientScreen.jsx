@@ -3,6 +3,8 @@ import { useSchedule } from '../hooks/useSchedule.js'
 import { upcoming, timeLabel, shortDay, startDay } from '../lib/schedule.js'
 import { useInventory } from '../hooks/useInventory.js'
 import { usePackages } from '../hooks/usePackages.js'
+import { useCommute } from '../hooks/useCommute.js'
+import { clock, inCommuteWindow } from '../lib/commute.js'
 import { useMoney } from '../state/MoneyContext.jsx'
 import { useWeather } from '../hooks/useWeather.js'
 import { describe, advice, PLACE } from '../lib/weather.js'
@@ -24,7 +26,10 @@ export default function AmbientScreen({ onWake }) {
   const { lowOrOut } = useInventory()
   const { weather } = useWeather()
   const { arrivingToday } = usePackages()
+  const { connections } = useCommute()
   const hint = advice(weather)
+  // the ambient screen only nags about the commute when it's actually relevant
+  const commute = inCommuteWindow() ? (connections[0] ?? null) : null
 
   return (
     <button className="ambient" onClick={onWake} aria-label="Open dashboard">
@@ -66,6 +71,13 @@ export default function AmbientScreen({ onWake }) {
           ]
             .filter(Boolean)
             .join('  ·  ')}
+        </div>
+      )}
+
+      {/* commute pill — weekday mornings only, and only while a train is catchable */}
+      {commute && (
+        <div className={`ambient__pill ${commute.minutesUntilLeave <= 5 ? 'ambient__pill--urgent' : ''}`}>
+          Leave by {clock(commute.leaveBy)} for the {clock(commute.slineDepart)}
         </div>
       )}
 

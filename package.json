@@ -11,7 +11,8 @@
     "sb": "supabase",
     "deploy:meals": "supabase functions deploy meal-ideas",
     "deploy:calendar": "supabase functions deploy calendar-sync",
-    "deploy:briefing": "supabase functions deploy morning-briefing"
+    "deploy:briefing": "supabase functions deploy morning-briefing",
+    "deploy:transit": "supabase functions deploy transit-refresh"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.58.0",
