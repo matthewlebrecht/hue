@@ -7,7 +7,7 @@ import { useWeather } from '../hooks/useWeather.js'
 import { describe, advice } from '../lib/weather.js'
 import { cachedBriefing } from '../lib/briefing.js'
 import { useCommute } from '../hooks/useCommute.js'
-import { clock } from '../lib/commute.js'
+import { clock, arrivalAt } from '../lib/commute.js'
 import { useInventory } from '../hooks/useInventory.js'
 import { cachedIdeas } from '../lib/meals.js'
 import { sentenceCase } from '../lib/text.js'
@@ -26,9 +26,12 @@ export default function Dashboard({ onOpen, onRest }) {
   const { lowOrOut } = useInventory()
   const { packages } = usePackages()
   const { weather } = useWeather()
-  const { connections } = useCommute()
+  const { connections, plans } = useCommute()
 
-  const commute = connections[0] ?? null
+  // an arrival target beats "next train from now" — that's the whole point of it
+  const firstPlan = plans.find((p) => p.plan.actionable && !p.plan.missed)
+  const commute = firstPlan?.plan.actionable ?? connections[0] ?? null
+  const commuteRider = firstPlan?.rider ?? null
   const agenda = upcoming(events, 3)
   const horizon = horizonSummary(events, packages, 3)
   const hint = advice(weather)
@@ -136,10 +139,12 @@ export default function Dashboard({ onOpen, onRest }) {
                 Leave by {clock(commute.leaveBy)}
               </div>
               <div className="zone__line zone__sub">
-                S-Line {clock(commute.slineDepart)} · {commute.traxName} {clock(commute.traxDepart)}
+                {commuteRider ? `${commuteRider.name} · ` : ''}
+                S-Line {clock(commute.slineDepart)} · {commute.traxName}{' '}
+                {clock(commute.traxDepart)}
               </div>
               <div className="zone__line zone__sub">
-                Gallivan {clock(commute.gallivan)}
+                Arrives {clock(arrivalAt(commute, commuteRider?.destination ?? 'gallivan'))}
               </div>
             </>
           ) : (

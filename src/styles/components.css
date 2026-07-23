@@ -93,6 +93,15 @@
   color: var(--rose);
 }
 
+.rider {
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--hairline);
+}
+.rider:last-of-type {
+  border-bottom: none;
+}
+
 .leaveby {
   text-align: center;
   padding: 28px 20px;

@@ -132,6 +132,61 @@ export function nextConnections(now, { trips, services, exceptions }, count = 3)
   return results
 }
 
+/** Every connection for the day, regardless of the current time. */
+export function allConnections(now, data) {
+  return nextConnections(new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0), data, 200)
+}
+
+export const arrivalAt = (connection, destination) =>
+  destination === 'city_center' ? (connection.cityCenter ?? connection.gallivan) : connection.gallivan
+
+/** "08:00" -> seconds after midnight */
+export function parseHm(hm) {
+  const [h, m] = String(hm).split(':').map(Number)
+  return h * 3600 + (m || 0) * 60
+}
+
+/**
+ * Plan backwards from when you need to be there.
+ *
+ * "Next train from now" is the wrong question when your start time is fixed —
+ * the useful answer is the LATEST connection that still gets you there on time,
+ * plus the one before it as insurance.
+ */
+export function arrivalPlan(now, data, { arriveBy, destination }) {
+  const target = parseHm(arriveBy)
+  const nowS = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()
+
+  const onTime = allConnections(now, data).filter((c) => {
+    const arrival = arrivalAt(c, destination)
+    return arrival != null && arrival <= target
+  })
+
+  if (onTime.length === 0) return { recommended: null, backup: null, missed: false, target }
+
+  // Latest one that still makes it — anything earlier is standing around at work.
+  const recommended = onTime[onTime.length - 1]
+  const backup = onTime[onTime.length - 2] ?? null
+
+  // Still catchable? The walk has to fit before the train leaves.
+  const catchable = onTime.filter((c) => c.slineDepart >= nowS + WALK_MIN * 60)
+
+  // The LAST still-catchable option, not the first. Taking the first would put
+  // you at your desk an hour early every morning — the whole point of an arrival
+  // target is to leave as late as you safely can.
+  const actionable = catchable.length > 0 ? catchable[catchable.length - 1] : null
+
+  return {
+    target,
+    recommended,
+    backup,
+    // Every on-time option has gone — you're arriving late whatever you do.
+    missed: catchable.length === 0,
+    actionable,
+    slack: recommended ? target - arrivalAt(recommended, destination) : null,
+  }
+}
+
 /** Seconds-after-midnight -> "7:44 AM". Handles values past 24h. */
 export function clock(seconds) {
   if (seconds == null) return null

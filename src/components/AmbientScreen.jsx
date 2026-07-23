@@ -26,10 +26,14 @@ export default function AmbientScreen({ onWake }) {
   const { lowOrOut } = useInventory()
   const { weather } = useWeather()
   const { arrivingToday } = usePackages()
-  const { connections } = useCommute()
+  const { connections, plans } = useCommute()
   const hint = advice(weather)
-  // the ambient screen only nags about the commute when it's actually relevant
-  const commute = inCommuteWindow() ? (connections[0] ?? null) : null
+  // the ambient screen only nags about the commute when it's actually relevant,
+  // and prefers the train that hits someone's arrival target over the next one
+  const planned = plans.find((p) => p.plan.actionable && !p.plan.missed)
+  const commute = inCommuteWindow()
+    ? (planned?.plan.actionable ?? connections[0] ?? null)
+    : null
 
   return (
     <button className="ambient" onClick={onWake} aria-label="Open dashboard">
