@@ -1,6 +1,8 @@
 import { useClock, timeParts } from '../hooks/useClock.js'
 import { useSchedule } from '../hooks/useSchedule.js'
-import { upcoming, comingUp, timeLabel, shortDay, startDay } from '../lib/schedule.js'
+import { upcoming, timeLabel, shortDay, startDay } from '../lib/schedule.js'
+import { usePackages } from '../hooks/usePackages.js'
+import { horizonSummary } from '../lib/horizon.js'
 import { useWeather } from '../hooks/useWeather.js'
 import { describe, advice } from '../lib/weather.js'
 import { cachedBriefing } from '../lib/briefing.js'
@@ -20,12 +22,13 @@ export default function Dashboard({ onOpen, onRest }) {
   const { status, goals, spend } = useMoney()
   const { events } = useSchedule({ limit: 60 })
   const agenda = upcoming(events, 3)
-  const horizon = comingUp(events, { limit: 3 })
+  const horizon = horizonSummary(events, packages, 3)
   const { weather } = useWeather()
   const hint = advice(weather)
   // read-only: the dashboard shows today's briefing if one exists, never writes one
   const briefing = cachedBriefing()
   const { lowOrOut } = useInventory()
+  const { packages } = usePackages()
   // read-only: the headline is whatever the Kitchen screen last generated, so the
   // dashboard never triggers a paid call of its own
   const meals = cachedIdeas()
@@ -121,10 +124,11 @@ export default function Dashboard({ onOpen, onRest }) {
           {horizon.length === 0 ? (
             <Waiting>Nothing on the horizon</Waiting>
           ) : (
-            horizon.map(({ event, when }) => (
-              <div key={event.id} className="zone__line">
-                <span className="zone__time">{when}</span>
-                {sentenceCase(event.title)}
+            horizon.map((item) => (
+              <div key={item.key} className="zone__line">
+                <span className="zone__time">{item.when}</span>
+                {item.kind === 'package' && '📦 '}
+                {sentenceCase(item.title)}
               </div>
             ))
           )}

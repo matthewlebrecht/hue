@@ -2,6 +2,7 @@ import { useClock, timeParts } from '../hooks/useClock.js'
 import { useSchedule } from '../hooks/useSchedule.js'
 import { upcoming, timeLabel, shortDay, startDay } from '../lib/schedule.js'
 import { useInventory } from '../hooks/useInventory.js'
+import { usePackages } from '../hooks/usePackages.js'
 import { useMoney } from '../state/MoneyContext.jsx'
 import { useWeather } from '../hooks/useWeather.js'
 import { describe, advice, PLACE } from '../lib/weather.js'
@@ -22,6 +23,7 @@ export default function AmbientScreen({ onWake }) {
   const next = upcoming(events, 1)[0] ?? null
   const { lowOrOut } = useInventory()
   const { weather } = useWeather()
+  const { arrivingToday } = usePackages()
   const hint = advice(weather)
 
   return (
@@ -47,16 +49,23 @@ export default function AmbientScreen({ onWake }) {
       </div>
 
       {/* one quiet line, only when there's something to say */}
-      {(next || lowOrOut.length > 0) && (
+      {(next || lowOrOut.length > 0 || arrivingToday.length > 0) && (
         <div className="ambient__next">
-          {next &&
-            (next.ongoing
-              ? next.event.title
-              : `Next: ${next.event.title} ${
-                  next.isToday ? timeLabel(next.event) : shortDay(startDay(next.event))
-                }`)}
-          {next && lowOrOut.length > 0 && '  ·  '}
-          {lowOrOut.length > 0 && `${lowOrOut.length} to pick up`}
+          {[
+            next &&
+              (next.ongoing
+                ? next.event.title
+                : `Next: ${next.event.title} ${
+                    next.isToday ? timeLabel(next.event) : shortDay(startDay(next.event))
+                  }`),
+            arrivingToday.length > 0 &&
+              `📦 ${arrivingToday.length} arriving${
+                arrivingToday.length === 1 ? '' : ' today'
+              }`,
+            lowOrOut.length > 0 && `${lowOrOut.length} to pick up`,
+          ]
+            .filter(Boolean)
+            .join('  ·  ')}
         </div>
       )}
 

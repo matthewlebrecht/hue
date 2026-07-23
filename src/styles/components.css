@@ -90,6 +90,18 @@
 .event__when--wide {
   width: 108px;
 }
+.event--package .event__when {
+  color: var(--text-dim);
+}
+.event--package {
+  cursor: pointer;
+}
+.event--package:active {
+  background: var(--surface-raised);
+}
+.event__badge {
+  margin-right: 6px;
+}
 .zone__hint {
   color: var(--amber);
   margin-top: 8px;
