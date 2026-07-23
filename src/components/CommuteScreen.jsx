@@ -64,53 +64,56 @@ export default function CommuteScreen() {
         <RiderPlan key={rider.id} rider={rider} plan={plan} />
       ))}
 
-      {connections.length > 0 && (
+      {(connections.length > 0 || outbound.length > 0) && (
         <>
           <div className="section-label" style={{ marginTop: 32 }}>
-            Next departures
+            Departures from 300 East
           </div>
-          <div className="txn-group">
-            {connections.map((c) => (
-              <div key={c.slineDepart} className="event">
-                <div className="event__when">{clock(c.leaveBy)}</div>
-                <div className="event__main">
-                  <div className="event__title">
-                    S-Line {clock(c.slineDepart)} → {c.traxName} {clock(c.traxDepart)}
-                  </div>
-                  <div className="event__meta">
-                    Gallivan {clock(c.gallivan)}
-                    {c.cityCenter ? ` · City Center ${clock(c.cityCenter)}` : ''} · {
-                      Math.round(c.wait / 60)
-                    } min transfer
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
 
-      {outbound.length > 0 && (
-        <>
-          <div className="section-label" style={{ marginTop: 32 }}>
-            Other direction · S-Line at 300 East
-          </div>
-          <div className="txn-group">
-            {outbound.map((t) => (
-              <div key={t.tripId} className="event">
-                <div className="event__when">{clock(t.at300East)}</div>
-                <div className="event__main">
-                  <div className="event__title">
-                    Eastbound{t.headsign ? ` · ${t.headsign}` : ''}
+          {connections.length > 0 && (
+            <>
+              <div className="board-label">Towards downtown</div>
+              <div className="txn-group" style={{ marginBottom: 16 }}>
+                {connections.map((c) => (
+                  <div key={`in-${c.slineDepart}`} className="event">
+                    {/* the time you stand on the platform, not the leave-by */}
+                    <div className="event__when">{clock(c.slineDepart)}</div>
+                    <div className="event__main">
+                      <div className="event__title">
+                        {c.traxName} connection at {clock(c.traxDepart)}
+                        {c.slineDelay ? ` · ${delayText(c.slineDelay)}` : ''}
+                      </div>
+                      <div className="event__meta">
+                        Gallivan {clock(c.gallivan)}
+                        {c.cityCenter ? ` · City Center ${clock(c.cityCenter)}` : ''} ·{' '}
+                        {Math.round(c.wait / 60)} min transfer
+                        {c.broken ? ' · connection missed' : ''}
+                      </div>
+                    </div>
                   </div>
-                  <div className="event__meta">
-                    Leaves Central Pointe {clock(t.centralPointe)} — the ride home, and the way
-                    out to Sugar House
-                  </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          )}
+
+          {outbound.length > 0 && (
+            <>
+              <div className="board-label">Towards Sugar House</div>
+              <div className="txn-group">
+                {outbound.map((t) => (
+                  <div key={`out-${t.tripId}`} className="event">
+                    <div className="event__when">{clock(t.at300East)}</div>
+                    <div className="event__main">
+                      <div className="event__title">{t.headsign || 'To Fairmont'}</div>
+                      <div className="event__meta">
+                        From Central Pointe {clock(t.centralPointe)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </>
       )}
 
