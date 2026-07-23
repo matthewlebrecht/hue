@@ -1,87 +1,113 @@
-import { comingUp, startDay, isMultiDay, spanDays, rangeLabel, shortDay, timeLabel } from './schedule.js'
 import { isPending, etaDate, packageLabel } from './packages.js'
+import { isOutstanding, dueDate } from './bills.js'
+import { isUpcoming, flightLabel } from './flights.js'
+import { shortDay } from './schedule.js'
+import { usd } from './format.js'
 
 /**
- * One timeline for everything on the horizon — calendar and deliveries in the
- * same list. Kept together on purpose: "what's coming" is one question, and
- * splitting it into two panels makes the reader do the merging.
+ * Coming Up: what's arriving, departing, or coming due.
+ *
+ * Deliberately NOT the calendar. Mirroring events here made this a second Today
+ * zone; these three sources answer a question the calendar doesn't — things with
+ * a deadline attached that nobody put in a calendar.
  */
-export function horizonItems(events, packages, { days = 60, limit = 20 } = {}) {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
 
-  const eventItems = comingUp(events, { limit: 50, days }).map(({ event, when, daysAway }) => ({
-    key: `e-${event.id}`,
-    kind: 'event',
-    date: startDay(event),
-    when,
-    title: event.title,
-    spanning: isMultiDay(event),
-    meta: [
-      daysAway === 1 ? 'Tomorrow' : `In ${daysAway} days`,
-      isMultiDay(event) ? `${spanDays(event)} days` : null,
-      !event.all_day ? timeLabel(event) : null,
-      event.who,
-      event.location,
-    ].filter(Boolean),
-    raw: event,
-  }))
+const DAY_MS = 86400000
 
-  // Packages include TODAY — unlike calendar events, they have no Today zone
-  // covering them, so dropping today's would hide the one that matters most.
-  const packageItems = packages
-    .filter(isPending)
-    .filter((p) => {
-      const eta = etaDate(p)
-      return !eta || eta >= today
+const startOfToday = () => {
+  const d = new Date()
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
+const daysAway = (date) => Math.round((date - startOfToday()) / DAY_MS)
+
+function whenLabel(date, days) {
+  if (days === 0) return 'Today'
+  if (days === 1) return 'Tomorrow'
+  if (days < 0) return `${Math.abs(days)}d overdue`
+  return shortDay(date)
+}
+
+export function horizonItems(
+  { packages = [], bills = [], flights = [] },
+  { limit = 40, days = 60 } = {}
+) {
+  const horizon = new Date(startOfToday().getTime() + days * DAY_MS)
+  const items = []
+
+  for (const p of packages.filter(isPending)) {
+    const eta = etaDate(p)
+    if (eta && eta > horizon) continue
+    items.push({
+      key: `p-${p.id}`,
+      kind: 'package',
+      icon: '📦',
+      date: eta,
+      when: eta ? whenLabel(eta, daysAway(eta)) : 'No ETA',
+      title: packageLabel(p),
+      meta: [p.carrier, p.tracking_no].filter(Boolean),
+      urgent: eta ? daysAway(eta) === 0 : false,
+      raw: p,
     })
-    .map((p) => {
-      const eta = etaDate(p)
-      const daysAway = eta ? Math.round((eta - today) / 86400000) : null
-      return {
-        key: `p-${p.id}`,
-        kind: 'package',
-        date: eta,
-        when: eta ? (daysAway === 0 ? 'Today' : shortDay(eta)) : 'No ETA',
-        title: packageLabel(p),
-        spanning: false,
-        meta: [
-          daysAway === 0 ? 'Arriving today' : daysAway === 1 ? 'Tomorrow' : null,
-          p.carrier,
-          p.tracking_no,
-        ].filter(Boolean),
-        raw: p,
-      }
-    })
+  }
 
-  return [...eventItems, ...packageItems]
+  for (const f of flights.filter(isUpcoming)) {
+    const depart = new Date(f.depart_at)
+    if (depart > horizon) continue
+    const day = new Date(depart.getFullYear(), depart.getMonth(), depart.getDate())
+    items.push({
+      key: `f-${f.id}`,
+      kind: 'flight',
+      icon: '✈',
+      date: day,
+      when: whenLabel(day, daysAway(day)),
+      title: flightLabel(f),
+      meta: [
+        depart.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+        [f.airline, f.flight_no].filter(Boolean).join(' '),
+        f.confirmation,
+        f.who,
+      ].filter(Boolean),
+      urgent: daysAway(day) <= 1,
+      raw: f,
+    })
+  }
+
+  for (const b of bills.filter(isOutstanding)) {
+    const due = dueDate(b)
+    if (due > horizon) continue
+    const away = daysAway(due)
+    items.push({
+      key: `b-${b.id}`,
+      kind: 'bill',
+      icon: '💳',
+      date: due,
+      when: whenLabel(due, away),
+      title: b.name,
+      meta: [
+        b.amount != null ? usd(b.amount) : null,
+        b.autopay ? 'Autopay' : null,
+        b.recurrence !== 'once' ? b.recurrence : null,
+      ].filter(Boolean),
+      // Only a bill you have to act on is urgent — autopay handles itself.
+      urgent: away <= 2 && !b.autopay,
+      overdue: away < 0,
+      raw: b,
+    })
+  }
+
+  return items
     .sort((a, b) => {
-      // Undated packages sink to the bottom rather than pretending to be soon.
       if (!a.date && !b.date) return 0
-      if (!a.date) return 1
+      if (!a.date) return 1 // undated packages sink rather than look imminent
       if (!b.date) return -1
       return a.date - b.date
     })
     .slice(0, limit)
 }
 
-/**
- * The three lines the dashboard zone can fit.
- *
- * Chronological, but the next multi-day trip is guaranteed a slot even if it's
- * further out — a trip needs lead time to be useful, and strict chronology would
- * bury it behind three deliveries the week before.
- */
-export function horizonSummary(events, packages, limit = 3) {
-  const all = horizonItems(events, packages, { limit: 50 })
-  const picked = all.slice(0, limit)
-
-  const nextTrip = all.find((i) => i.spanning)
-  if (nextTrip && !picked.includes(nextTrip)) {
-    // with an empty list there's no slot to give up — just add it
-    if (picked.length === 0) picked.push(nextTrip)
-    else picked[picked.length - 1] = nextTrip
-  }
-
-  return picked
+/** The handful of lines the dashboard zone can fit. */
+export function horizonSummary(sources, limit = 3) {
+  return horizonItems(sources, { limit })
 }

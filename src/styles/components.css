@@ -173,14 +173,26 @@
 .event__when--wide {
   width: 108px;
 }
-.event--package .event__when {
-  color: var(--text-dim);
-}
-.event--package {
+.event--tap {
+  width: 100%;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  text-align: left;
   cursor: pointer;
 }
-.event--package:active {
+.event--tap:active {
   background: var(--surface-raised);
+}
+.event--urgent .event__when {
+  color: var(--amber);
+}
+.event__when--overdue {
+  color: var(--rose) !important;
+}
+.zone__line--urgent {
+  color: var(--amber);
 }
 .event__badge {
   margin-right: 6px;

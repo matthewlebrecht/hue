@@ -2,7 +2,7 @@ import { useClock, timeParts } from '../hooks/useClock.js'
 import { useSchedule } from '../hooks/useSchedule.js'
 import { upcoming, timeLabel, shortDay, startDay } from '../lib/schedule.js'
 import { useInventory } from '../hooks/useInventory.js'
-import { usePackages } from '../hooks/usePackages.js'
+import { useHorizon } from '../hooks/useHorizon.js'
 import { useCommute } from '../hooks/useCommute.js'
 import { clock, inCommuteWindow } from '../lib/commute.js'
 import { useMoney } from '../state/MoneyContext.jsx'
@@ -25,7 +25,7 @@ export default function AmbientScreen({ onWake }) {
   const next = upcoming(events, 1)[0] ?? null
   const { lowOrOut } = useInventory()
   const { weather } = useWeather()
-  const { arrivingToday } = usePackages()
+  const { arrivingToday, dueSoon } = useHorizon()
   const { connections, plans } = useCommute()
   const hint = advice(weather)
   // the ambient screen only nags about the commute when it's actually relevant,
@@ -58,7 +58,7 @@ export default function AmbientScreen({ onWake }) {
       </div>
 
       {/* one quiet line, only when there's something to say */}
-      {(next || lowOrOut.length > 0 || arrivingToday.length > 0) && (
+      {(next || lowOrOut.length > 0 || arrivingToday.length > 0 || dueSoon.length > 0) && (
         <div className="ambient__next">
           {[
             next &&
@@ -71,6 +71,8 @@ export default function AmbientScreen({ onWake }) {
               `📦 ${arrivingToday.length} arriving${
                 arrivingToday.length === 1 ? '' : ' today'
               }`,
+            dueSoon.length > 0 &&
+              `💳 ${dueSoon[0].name} due${dueSoon.length > 1 ? ` +${dueSoon.length - 1}` : ''}`,
             lowOrOut.length > 0 && `${lowOrOut.length} to pick up`,
           ]
             .filter(Boolean)

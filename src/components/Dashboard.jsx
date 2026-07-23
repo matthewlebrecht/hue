@@ -1,7 +1,7 @@
 import { useClock, timeParts } from '../hooks/useClock.js'
 import { useSchedule } from '../hooks/useSchedule.js'
 import { upcoming, timeLabel, shortDay, startDay } from '../lib/schedule.js'
-import { usePackages } from '../hooks/usePackages.js'
+import { useHorizon } from '../hooks/useHorizon.js'
 import { horizonSummary } from '../lib/horizon.js'
 import { useWeather } from '../hooks/useWeather.js'
 import { describe, advice } from '../lib/weather.js'
@@ -24,7 +24,7 @@ export default function Dashboard({ onOpen, onRest }) {
   const { status, goals, spend } = useMoney()
   const { events } = useSchedule({ limit: 60 })
   const { lowOrOut } = useInventory()
-  const { packages } = usePackages()
+  const { sources } = useHorizon()
   const { weather } = useWeather()
   const { connections, plans } = useCommute()
 
@@ -33,7 +33,7 @@ export default function Dashboard({ onOpen, onRest }) {
   const commute = firstPlan?.plan.actionable ?? connections[0] ?? null
   const commuteRider = firstPlan?.rider ?? null
   const agenda = upcoming(events, 3)
-  const horizon = horizonSummary(events, packages, 3)
+  const horizon = horizonSummary(sources, 3)
   const hint = advice(weather)
   // read-only: the dashboard shows today's briefing if one exists, never writes one
   const briefing = cachedBriefing()
@@ -157,10 +157,12 @@ export default function Dashboard({ onOpen, onRest }) {
             <Waiting>Nothing on the horizon</Waiting>
           ) : (
             horizon.map((item) => (
-              <div key={item.key} className="zone__line">
+              <div
+                key={item.key}
+                className={`zone__line ${item.urgent ? 'zone__line--urgent' : ''}`}
+              >
                 <span className="zone__time">{item.when}</span>
-                {item.kind === 'package' && '📦 '}
-                {sentenceCase(item.title)}
+                {item.icon} {sentenceCase(item.title)}
               </div>
             ))
           )}
