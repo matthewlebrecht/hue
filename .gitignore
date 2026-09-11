@@ -15,3 +15,7 @@ dist-ssr
 .DS_Store
 *.log
 npm-debug.log*
+
+# machine-local ? Claude Code permissions + Supabase CLI cache
+.claude/settings.local.json
+supabase/.temp/
